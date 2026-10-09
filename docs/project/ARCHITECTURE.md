@@ -1,6 +1,6 @@
 # Architecture
 
-State: **plan only**. No application code exists yet. Update this file whenever the structure changes.
+State: **plan approved** (PR #1 and the maintainer's answers in it). No application code exists yet. Update this file whenever the structure changes.
 
 ## Repository layout (planned)
 
@@ -52,6 +52,7 @@ Sending a request:
 
 ```
 Request file ─┐
+local values ─┤
 collection /  ├─> core: resolve auth inheritance ─> substitute :path variables
 folder chain  │         ─> interpolate {{vars}} (environment > collection) ─> ResolvedRequest
 environment ──┤
@@ -68,19 +69,20 @@ Response bodies are not serialized into the JSON result. `http_send` returns met
 | `Workspace` | `name`, collections, environments |
 | `Collection` | `name`, `order`, `description`, `variables: Vec<Variable>`, `auth: Auth`, children |
 | `Folder` | `name`, `order`, `description`, `auth: Auth`, children |
-| `Request` | `name`, `order`, `description`, `method`, `url`, `path_params: Vec<PathParam>`, `query: Vec<KeyValue>`, `headers: Vec<KeyValue>`, `auth: Auth`, `body: Body`, `settings: RequestSettings` |
-| `KeyValue` | `name`, `value`, `enabled` (default true), `description` |
-| `PathParam` | `name`, `value` |
+| `Request` | `id`, `name`, `order`, `description`, `method`, `url`, `path_params: Vec<PathParam>`, `query: Vec<KeyValue>`, `headers: Vec<KeyValue>`, `auth: Auth`, `body: Body`, `settings: RequestSettings` |
+| `KeyValue` | `name`, `value`, `enabled` (default true), `description`. In `query`, `value` is committed only if it is a `{{var}}` reference (D-021). |
+| `PathParam` | `name`, `value`, `description`. Same value rule as `query`. |
+| `LocalValues` | per request `id`: literal query and path variable values, `skip_tls_verify`. Stored in `.damnhttp/`, never committed. |
 | `Body` | `None` \| `Json(text)` \| `Text(text, content_type)` \| `FormUrlencoded(Vec<KeyValue>)` \| `Multipart(Vec<Part>)`; a `Part` is a text value or a file path relative to the workspace |
 | `Auth` | `Inherit` \| `None` \| `Basic { username, password }` \| `Bearer { token }`. Tagged enum, so OAuth2 / API key are new variants. Default is `Inherit` on folders and requests, `None` on collections. |
-| `RequestSettings` | `follow_redirects`, `max_redirects`, `timeout_ms`, `verify_tls` |
+| `RequestSettings` | `follow_redirects`, `max_redirects`, `timeout_ms` |
 | `Environment` | `id`, `name`, `variables: Vec<Variable>` |
 | `Variable` | `name`, `value`, `secret`, `description`. A secret variable never carries a value in a committed file. |
-| `ResolvedRequest` | fully interpolated method, URL, headers, body + effective `HttpOptions` (settings + local proxy / CA) |
+| `ResolvedRequest` | fully interpolated method, URL, headers, body + effective `HttpOptions` (settings + local proxy / CA / TLS verification) |
 | `ResponseMeta` | `response_id`, `status`, `status_text`, `http_version`, `headers`, `size { headers, body }`, `timing { total, dns+connect, ttfb, download }`, `content_type`, `redirects` |
 | `HistoryEntry` | timestamp, request snapshot, `ResponseMeta`. Local only. |
 
-Identity is the file path. Only environments have an `id`, because local secrets must keep pointing at them across renames (D-006).
+Requests and environments have a stable `id`, because local state (literal values, secrets) must keep pointing at them when a teammate renames or moves the file (D-022). Folders and collections are identified by path.
 
 ## File format (draft v1)
 
@@ -92,7 +94,7 @@ A workspace is a folder, normally a git repository root:
 my-workspace/
 ├── damnhttp.yaml              workspace manifest
 ├── .gitignore                 the app adds /.damnhttp/ here
-├── .damnhttp/                 git-ignored: secrets file, history, UI state, local HTTP settings
+├── .damnhttp/                 git-ignored, local state only: secrets.yaml, values.yaml, history, UI state, HTTP settings
 ├── environments/
 │   ├── dev.yaml
 │   └── staging.yaml
@@ -133,18 +135,17 @@ auth:
 ```yaml
 version: 1
 kind: request
+id: req_k3m9x2ap
 name: Get pet by ID
 order: a1
 description: Returns a single pet.
 method: GET
 url: "{{baseUrl}}/{{apiVersion}}/pets/:petId"
-path_params:
-  - name: petId
-    value: "42"
 query:
   - name: verbose
-    value: "true"
     enabled: false
+  - name: tenant
+    value: "{{tenantId}}"
 headers:
   - name: Accept
     value: application/json
@@ -172,17 +173,32 @@ variables:
     secret: true
 ```
 
+`.damnhttp/values.yaml` (git-ignored) holds what the request file above leaves out:
+
+```yaml
+version: 1
+requests:
+  req_k3m9x2ap:
+    path_params:
+      petId: "42"
+    query:
+      - name: verbose
+        value: "true"
+```
+
 Rules:
 
 - **Determinism.** Keys are written in a fixed order defined per `kind`, never alphabetically or by insertion. Same model in, byte-identical file out. UTF-8, LF, two-space indent, one trailing newline, no BOM. Scalars are plain unless a documented rule requires double quotes; multi-line text uses `|` block scalars. The emitter is our own code over this restricted YAML subset (D-008).
 - **Defaults are omitted.** `enabled: true`, `auth: inherit`, empty lists, empty descriptions and default settings are not written, so files stay short and unrelated edits do not touch them.
 - **No volatile data.** No timestamps, no per-save IDs, no "last modified by".
 - **Names and files.** `name` holds the display name. The file or directory name is a slug of it (`get-pet-by-id.yaml`), with a numeric suffix on collision. Renaming in the app renames the file.
-- **Ordering.** Each item carries a short `order` key (fractional index). Siblings sort by `order`, then by file name. Moving an item rewrites one field in one file; two people adding items to the same folder never conflict (D-007).
+- **Ordering.** Each item carries a short `order` key (fractional index). Siblings sort by `order`, then by file name. Moving an item rewrites one field in one file; two people adding items to the same folder never conflict. Equal keys are ordered by file name. When keys in a sibling group grow past a length limit, the app renormalizes that group (D-007).
 - **Lists** (`query`, `headers`, `variables`, ...) keep the user's order.
 - **Versioning.** Every file has `version`. The app migrates older versions on write. A file with a newer version than the app supports opens read-only, so an old app never drops fields it does not know (D-009).
-- **Secrets.** A variable with `secret: true` has no `value` key in the committed file. Its value lives in the OS keychain or `.damnhttp/secrets.yaml`, keyed by environment `id` + variable name.
-- **Machine-specific HTTP settings** (proxy, custom CA path) live in `.damnhttp/`, not in request files (D-011).
+- **Secrets.** A variable with `secret: true` has no `value` key in the committed file. Its value lives in `.damnhttp/secrets.yaml`, keyed by environment `id` + variable name. Only environment variables can be secret (D-019).
+- **Local values (D-021).** For `query` and `path_params`, a request file holds names, `enabled`, order and descriptions. A `value` is written only when it is a `{{var}}` reference. Literal values go to `.damnhttp/values.yaml`, keyed by request `id`; repeated query names are matched by occurrence. The committed `url` never has a query string: a typed or pasted URL is split on save. A literal value found in a committed file (hand edit) is moved to local values on load and reported by the pre-commit check. `path_params` lists only variables that have a reference value or a description; the names themselves come from `url`.
+- **`.damnhttp/` holds local state only.** Everything the team shares, including non-secret environments, lives outside it.
+- **Machine-specific HTTP settings** (proxy, custom CA, TLS verification) are local, never in request files (D-020).
 
 ### Path variables and `{{var}}`
 
@@ -198,13 +214,13 @@ Naming: `<area>_<verb>`. Paths are workspace-relative strings. M1 and M2 command
 | Milestone | Command | Purpose |
 |---|---|---|
 | M1 | `app_info` | version, platform, identifier |
-| M1 | `settings_get`, `settings_set` | app settings (theme, language, proxy, CA) |
+| M1 | `settings_get`, `settings_set` | app settings (theme, language, proxy, CA, TLS verification) |
 | M1 | `workspace_create`, `workspace_open`, `workspace_close` | open/create via a backend-side folder picker or a recent path |
 | M1 | `workspace_recent_list` | recent workspaces |
 | M1 | `workspace_tree` | the whole tree (names, kinds, methods, order) for the sidebar |
 | M1 | `collection_create`, `folder_create`, `request_create` | new nodes |
 | M1 | `node_rename`, `node_duplicate`, `node_move`, `node_delete` | tree operations; `node_move` covers drag and drop |
-| M1 | `request_read`, `request_save` | request editor |
+| M1 | `request_read`, `request_save` | request editor. Read merges the committed file with local values; save splits them (D-021). |
 | M1 | `collection_read`, `collection_save`, `folder_read`, `folder_save` | collection / folder settings |
 | M1 | `http_send`, `http_cancel` | execute a saved request or an unsaved draft |
 | M1 | `response_body` | read a byte range of a response body, raw or pretty-printed |

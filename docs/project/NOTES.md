@@ -2,14 +2,14 @@
 
 ## Open questions for the maintainer
 
-Raised in the `project-plan` PR. Each one is expensive to change once M1 is built.
+The six questions from PR #1 are answered and recorded (D-004, D-005, D-007, D-019, D-020, D-021). These follow from the "literal values are never committed" rule (D-021) and need an answer before `m1-core-model`:
 
-1. **Workspace shape (D-005).** One repo = one workspace holding several collections, with environments shared across the workspace. OK, or one collection per repo, or environments per collection?
-2. **Ordering (D-007).** A fractional `order` key in each file (no conflicts, one-file moves, not human-meaningful) versus an ordered child list in the parent file (readable, conflicts when two people add to the same folder).
-3. **Secrets default (D-010).** OS keychain first with a git-ignored file as fallback, or always the git-ignored file? Should collection variables also be allowed to be secret?
-4. **Proxy / custom CA (D-011).** Kept as local settings and never committed. The brief says "per request"; is a per-request proxy override needed in the v1 UI?
-5. **libgit2 license (D-004).** GPL-2.0 with a linking exception. Fine for Apache-2.0 binaries; confirm you accept it, otherwise local git moves to `gix`.
-6. **Names.** Manifest `damnhttp.yaml`, local directory `.damnhttp/`, extension `.yaml`. Any preference?
+1. **Request ids (D-022).** Local values are "keyed by request", but requests had no id: a teammate renaming or moving a request would orphan everyone's local values. Proposal: add a stable `id` line to every request file. OK?
+2. **What counts as a reference.** Proposal: a value is committed only if it is exactly one `{{var}}`. Anything with literal text around it (`{{a}}-1`, `v{{n}}`) is stored locally as a whole. OK, or should mixed values be committed?
+3. **Scope.** The rule covers query params and path variables. Header values, JSON / text bodies and form fields are still committed with their literals (a body `{"id": 1234}` is shared). Intended?
+4. **Literals inside the URL path.** In `https://some.service/it/stations/1234` the app cannot tell that `it` and `1234` are data; they are committed as part of the URL unless the user turns them into `:variables`. The same goes for the host. Acceptable?
+5. **Sharing a default on purpose.** Values such as `limit=20` or `format=json` are part of how the API is called, and teammates would each have to retype them. Proposal: a "Share with team" action on a value that moves it into a collection variable and leaves `{{var}}` in the param. OK?
+6. **Path variables in the file.** Proposal: `path_params` lists a variable only when it has a `{{var}}` value or a description; otherwise the name comes from the URL alone, so the two cannot drift apart. OK, or always list every name?
 
 ## Things the maintainer needs to do outside the repo
 
@@ -31,4 +31,6 @@ Known risks to check then:
 
 - A Cargo package must not be named `core` (D-001).
 - `git2` must be built without its network features so the build never pulls OpenSSL (D-004).
-- The `project-plan` PR has no CI checks; CI arrives with `m0-ci`.
+- No PR has CI checks until `m0-ci` is merged.
+- PR #1 was merged with a merge commit. The convention for `feature/*` → `develop` is squash (see `CONVENTIONS.md`); history is left as it is.
+- Commits are SSH-signed with a passphrase-protected key. If `git commit` fails with an `ssh_askpass` error, the maintainer has to load `~/.ssh/github_sign` into the agent from a real terminal. Do not bypass signing.

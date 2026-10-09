@@ -38,7 +38,7 @@ Promotion PRs are opened by the maintainer. Nothing reaches `main` without havin
 - Library crates define their own error enum with `thiserror`. No `anyhow` in library crates.
 - `app` converts every error into `AppError { code, message, details }`, where `code` is a stable `SCREAMING_SNAKE_CASE` string. The frontend shows text from the i18n catalogue keyed by `code`; `message` is English diagnostic text for logs and the Advanced view.
 - Git errors keep the captured stderr in `details`. It is shown only in Advanced.
-- Secret values never appear in errors, logs or events.
+- Secret values and local literal values (D-021) never appear in errors, logs or events.
 
 ## TypeScript / React
 
@@ -53,6 +53,7 @@ Promotion PRs are opened by the maintainer. Nothing reaches `main` without havin
 
 - Rust unit tests live next to the code (`#[cfg(test)]`); cross-module tests in `crates/<name>/tests/`. Fixtures in `crates/<name>/tests/fixtures/`.
 - Serialization: every model type has a round-trip test and a determinism test (serialize twice, compare bytes; parse then serialize, compare with the source file).
+- Anything that writes a committed file is tested against the D-021 invariant: no literal query or path variable value in the output.
 - Filesystem and git tests use temp dirs and temp repos. No test touches the network; HTTP tests use a local server, git tests use `file://` remotes.
 - Importer fixtures must be redistributable; each fixture directory has a `SOURCE.md` naming origin and license.
 - Secret-leak rules: each rule has positive and negative cases; false positives are regressions.
