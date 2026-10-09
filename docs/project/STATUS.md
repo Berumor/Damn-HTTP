@@ -25,7 +25,7 @@ Last updated: 2026-10-09
 
 ## Open PRs
 
-- `docs: record plan decisions from PR #1 review` (`feature/plan-decisions` → `develop`): PR_URL
+- `docs: record plan decisions from PR #1 review` (`feature/plan-decisions` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/2
 
 ## Exact next step
 
