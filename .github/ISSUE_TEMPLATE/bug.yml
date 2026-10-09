@@ -1,0 +1,68 @@
+name: Bug report
+description: Something does not work as it should
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Remove tokens, passwords and private URLs from anything you paste here.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a workspace
+        2. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Damn HTTP version
+      placeholder: "0.1.0, or a commit hash"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Linux
+    validations:
+      required: true
+  - type: input
+    id: os-details
+    attributes:
+      label: OS version and, on Linux, distribution and desktop
+      placeholder: "CachyOS, KDE Plasma, Wayland"
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Requests and responses
+        - Collections and files
+        - Variables, environments, secrets
+        - Sync (git)
+        - Import
+        - Installation or startup
+        - Other
+  - type: input
+    id: git-version
+    attributes:
+      label: Git version (for sync problems)
+      placeholder: "output of: git --version"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error messages or logs
+      render: text

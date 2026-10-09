@@ -1,0 +1,29 @@
+name: Feature request
+description: Suggest an improvement or a new feature
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve
+      description: Describe the situation you are in, not only the solution you have in mind.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like to happen
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or workarounds you have tried
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      description: Scripting, GraphQL, gRPC, WebSocket, cloud accounts and telemetry are out of scope for version 1.
+      options:
+        - label: I have checked that this is not one of the listed non-goals
+          required: true
