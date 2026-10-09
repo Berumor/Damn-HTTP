@@ -239,3 +239,9 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
   - Workspace crates are `publish = false`.
 - Alternatives: a floating `stable` channel (CI and local builds can then disagree, and a new clippy release can break an unrelated PR).
 - Consequences: toolchain updates are explicit `chore:` PRs.
+
+## D-032: CI layout (2026-10-09, proposed)
+
+- Decision: one workflow, `ci.yml`, with four jobs: Rust (fmt, clippy, tests), cargo-deny, PR title, Commits. The Commits job is a shell script in the repo that checks Conventional Commits and DCO sign-off on every non-merge commit of the PR (D-015, D-023). Allowed types: `feat`, `fix`, `docs`, `test`, `chore`, `refactor`, `ci`, `build`, `perf`, `revert`. Rust jobs run on `ubuntu-24.04` only; other platforms are covered by the packaging check in M1. Actions are pinned by SHA. The workflow token is read-only.
+- Alternatives: commitlint (needs Node tooling in the repo before the frontend exists); running Rust tests on all three OSes on every PR (slow; revisit when platform-specific code such as git process handling arrives in M3).
+- Consequences: the sign-off must carry the commit author's email, so commits authored by bots (e.g. Dependabot) would fail until an exemption is added.
