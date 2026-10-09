@@ -25,7 +25,7 @@ Last updated: 2026-10-09
 
 ## Open PRs
 
-- `docs: record maintainer answers from PR #2` (`feature/plan-answers` → `develop`): PR_URL
+- `docs: record maintainer answers from PR #2` (`feature/plan-answers` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/3
 
 ## Exact next step
 
