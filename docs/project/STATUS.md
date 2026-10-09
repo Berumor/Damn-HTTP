@@ -27,7 +27,7 @@ Last updated: 2026-10-09
 ## Open PRs
 
 - `docs: record maintainer answers from PR #2` (`feature/plan-answers` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/3
-- `docs: add repo hygiene files and templates` (`feature/m0-repo-hygiene` → `develop`): PR_URL. Contains the commits of PR #3; merge #3 first.
+- `docs: add repo hygiene files and templates` (`feature/m0-repo-hygiene` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/4. Contains the commits of PR #3; merge #3 first.
 
 ## Exact next step
 
