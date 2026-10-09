@@ -32,7 +32,7 @@ Last updated: 2026-10-09
 
 ## Open PRs
 
-- `feat: add core data model with committed/local value split` (`feature/m1-core-model` → `develop`): PR_URL
+- `feat: add core data model with committed/local value split` (`feature/m1-core-model` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/7
 
 ## Exact next step
 
