@@ -5,21 +5,22 @@
 - Long-lived branches: `main` (stable releases), `beta` (pre-releases), `develop` (integration). Never commit or push to them directly.
 - Short-lived branches: `feature/<task>` and `fix/<task>` from an up-to-date `develop`. `<task>` is a kebab-case slug and matches the task slug in `ROADMAP.md` (e.g. `feature/m1-file-format`). One branch = one focused task.
 - Commits: Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `chore:`, `refactor:`, `ci:`; `!` or a `BREAKING CHANGE:` footer for breaking changes), signed off with `git commit -s`. Commit often.
-- PRs target `develop`. The title is a valid Conventional Commit message (it becomes the squash commit). The description has: what changed, why, how it was tested, screenshots for UI changes, decisions recorded in `DECISIONS.md`.
+- Commits are not squashed (D-023), so each one lands on `main` and is read by the release tooling. Use `feat:` / `fix:` only for commits that should appear in release notes; a correction to work done earlier on the same branch is `refactor:`, `test:`, `docs:` or `chore:`.
+- PRs target `develop`. The title is a valid Conventional Commit message. The description has: what changed, why, how it was tested, screenshots for UI changes, decisions recorded in `DECISIONS.md`.
 - The app builds and tests pass at every PR. Docs in `docs/project/` are updated in the same PR.
 - Agents never merge. After opening a PR, continue only with work that does not depend on it. After a merge, update local `develop` and branch from there.
 - If `gh` is unavailable: push the branch, write the PR title and description into `STATUS.md`, tell the maintainer.
 - Never force-push a shared branch or rewrite pushed history.
 
-Merge strategy:
+Merge strategy: merge commits everywhere, never squash or rebase-merge (D-023).
 
 | From → to | Method |
 |---|---|
-| `feature/*`, `fix/*` → `develop` | squash |
+| `feature/*`, `fix/*` → `develop` | merge commit |
 | `develop` → `beta` | merge commit, never squash |
 | `beta` → `main` | merge commit, never squash |
 | back-merges `main` → `beta`, `main` → `develop` | merge commit |
-| hotfix `fix/*` → `main` | squash, then back-merge down the chain |
+| hotfix `fix/*` → `main` | merge commit, then back-merge down the chain |
 
 Promotion PRs are opened by the maintainer. Nothing reaches `main` without having been a beta.
 
@@ -38,7 +39,7 @@ Promotion PRs are opened by the maintainer. Nothing reaches `main` without havin
 - Library crates define their own error enum with `thiserror`. No `anyhow` in library crates.
 - `app` converts every error into `AppError { code, message, details }`, where `code` is a stable `SCREAMING_SNAKE_CASE` string. The frontend shows text from the i18n catalogue keyed by `code`; `message` is English diagnostic text for logs and the Advanced view.
 - Git errors keep the captured stderr in `details`. It is shown only in Advanced.
-- Secret values never appear in errors, logs or events.
+- Secret values and local literal values (D-021) never appear in errors, logs or events.
 
 ## TypeScript / React
 
@@ -53,6 +54,7 @@ Promotion PRs are opened by the maintainer. Nothing reaches `main` without havin
 
 - Rust unit tests live next to the code (`#[cfg(test)]`); cross-module tests in `crates/<name>/tests/`. Fixtures in `crates/<name>/tests/fixtures/`.
 - Serialization: every model type has a round-trip test and a determinism test (serialize twice, compare bytes; parse then serialize, compare with the source file).
+- Anything that writes a committed file is tested against the D-021 invariant: no literal query or path variable value in the output.
 - Filesystem and git tests use temp dirs and temp repos. No test touches the network; HTTP tests use a local server, git tests use `file://` remotes.
 - Importer fixtures must be redistributable; each fixture directory has a `SOURCE.md` naming origin and license.
 - Secret-leak rules: each rule has positive and negative cases; false positives are regressions.
