@@ -26,10 +26,12 @@ Promotion PRs are opened by the maintainer. Nothing reaches `main` without havin
 
 ## Rust
 
-- Stable toolchain pinned in `rust-toolchain.toml`. Edition 2021 or newer, set once in the workspace.
-- `cargo fmt` default style. `cargo clippy --workspace --all-targets -- -D warnings`. Lints are configured once under `[workspace.lints]`.
+- Stable toolchain pinned to an exact version in `rust-toolchain.toml` (rustup installs it automatically). Edition 2024, set once in `[workspace.package]`. Bump the pin in its own `chore:` PR.
+- `cargo fmt` default style. `cargo clippy --workspace --all-targets -- -D warnings`. Lints are configured once under `[workspace.lints]`; every crate has `[lints] workspace = true`. `unwrap_used`, `expect_used`, `panic`, `todo`, `dbg_macro` and printing to stdout / stderr are warnings, so CI rejects them; `clippy.toml` allows them in tests.
 - Dependencies and their versions are declared in `[workspace.dependencies]`; crates use `workspace = true`.
-- `unsafe` is forbidden (`#![forbid(unsafe_code)]`) in every crate.
+- `unsafe` is forbidden in every crate through the workspace lint `unsafe_code = "forbid"`.
+- A new crate inherits `version`, `edition`, `rust-version`, `license`, `repository` and `publish` from the workspace. `Cargo.lock` is committed.
+- A new license goes into `deny.toml` only in the PR that adds the dependency needing it.
 - No `unwrap()` / `expect()` / `panic!` outside tests, except for invariants that are proven in a comment.
 - `core` and `http` must not depend on Tauri or on anything UI-related.
 - Naming: packages `damnhttp-<name>`; modules and functions `snake_case`; Tauri commands `<area>_<verb>` (`request_save`).
@@ -62,14 +64,14 @@ Promotion PRs are opened by the maintainer. Nothing reaches `main` without havin
 
 ## Run, build, test
 
-Nothing is scaffolded yet. These are the commands the scaffold will support; correct this section in the PR that introduces each one.
+The Rust commands work today. The frontend commands are planned; correct this section in the PR that introduces each one.
 
 | Purpose | Command | Available from |
 |---|---|---|
 | Format check | `cargo fmt --all --check` | `m0-cargo-workspace` |
 | Lint | `cargo clippy --workspace --all-targets -- -D warnings` | `m0-cargo-workspace` |
 | Rust tests | `cargo test --workspace` | `m0-cargo-workspace` |
-| License / advisory check | `cargo deny check` | `m0-cargo-workspace` |
+| License / advisory check | `cargo deny check` (install: `cargo install cargo-deny --locked`) | `m0-cargo-workspace` |
 | Install frontend deps | `pnpm install` | `m1-tauri-skeleton` |
 | Run the app | `pnpm tauri dev` | `m1-tauri-skeleton` |
 | Frontend checks | `pnpm lint`, `pnpm typecheck`, `pnpm test` | `m1-tauri-skeleton` |
