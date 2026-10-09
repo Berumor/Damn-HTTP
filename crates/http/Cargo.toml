@@ -1,0 +1,15 @@
+[package]
+name = "damnhttp-http"
+description = "HTTP request execution for Damn HTTP"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+damnhttp-core = { workspace = true }
+
+[lints]
+workspace = true
