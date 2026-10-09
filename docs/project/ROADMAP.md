@@ -8,12 +8,12 @@ Legend: `[ ]` todo, `[~]` in progress or PR open, `[x]` merged.
 
 - [x] `project-plan`: project memory in `docs/project/`, `AGENTS.md`. Approved and merged (PR #1).
 - [x] `plan-decisions`: maintainer's answers from PR #1 (D-019 to D-022), merge strategy change (D-023). Merged (PR #2).
-- [~] `plan-answers`: maintainer's answers from PR #2 (D-022 amended, D-024 to D-029).
+- [x] `plan-answers`: maintainer's answers from PR #2 (D-022 amended, D-024 to D-029).
 
 ## M0: CI basics and repo hygiene
 
-- [~] `m0-repo-hygiene`: `NOTICE`, `CONTRIBUTING.md` (DCO, no CLA), `CODE_OF_CONDUCT.md`, `SECURITY.md`, README expansion, issue templates (bug, feature), PR template, `.editorconfig`, `.gitignore` for Rust + Node. (`LICENSE` already exists.)
-- [ ] `m0-cargo-workspace`: Cargo workspace with empty `core`, `http`, `import`, `git` crates, `rust-toolchain.toml`, shared lints, `rustfmt.toml`, `deny.toml`.
+- [x] `m0-repo-hygiene`: `NOTICE`, `CONTRIBUTING.md` (DCO, no CLA), `CODE_OF_CONDUCT.md`, `SECURITY.md`, README expansion, issue templates (bug, feature), PR template, `.editorconfig`, `.gitignore` for Rust + Node. (`LICENSE` already exists.)
+- [~] `m0-cargo-workspace`: Cargo workspace with empty `core`, `http`, `import`, `git` crates, `rust-toolchain.toml`, shared lints, `rustfmt.toml`, `deny.toml`.
 - [ ] `m0-ci`: GitHub Actions on PRs and pushes to `develop` / `beta` / `main`: fmt, clippy (deny warnings), tests, `cargo-deny`, dependency caching, PR title check (Conventional Commits), Conventional Commits check on every commit of the PR (D-023), DCO sign-off check. Frontend jobs are added in `m1-tauri-skeleton`.
 
 ## M1: model, file format, request editor, send, response viewer

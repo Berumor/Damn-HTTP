@@ -218,14 +218,24 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
 - Alternatives: a second parser in TypeScript for instant highlighting (two implementations that can disagree).
 - Consequences: URL highlighting in the editor is asynchronous (debounced IPC call).
 
-## D-029: The detection rules module is built in M2, its commit-time UI in M4 (2026-10-09, proposed)
+## D-029: The detection rules module is built in M2, its commit-time UI in M4 (2026-10-09, accepted)
 
 - Context: "Share with team" (M2) must run the leak guard on the value, but the brief places the leak guard in M4.
 - Decision: the rules module in `core` (credential patterns, entropy, the D-026 path hint), with its tests and documentation, is task `m2-detection-rules`. The "Save version" warning flow that uses it stays in M4.
 - Consequences: one rules module from the start; M4 only adds UI on top of it.
 
-## D-030: Repo hygiene choices (2026-10-09, proposed)
+## D-030: Repo hygiene choices (2026-10-09, accepted)
 
 - Decision: Code of Conduct is the Contributor Covenant 2.1. Security reports go through GitHub private vulnerability reporting. Blank issues are disabled; bug and feature requests use issue forms. `NOTICE` names "Berumor and the Damn HTTP contributors" as copyright holder.
 - Alternatives: a security email address (none exists yet, and none is to be registered).
 - Consequences: the maintainer has to enable private vulnerability reporting and decide on a public contact (see `NOTES.md`).
+
+## D-031: Cargo workspace settings (2026-10-09, proposed)
+
+- Decision:
+  - Toolchain pinned to an exact stable version (`1.99.0`) in `rust-toolchain.toml`; `rust-version = "1.99"`; edition 2024; resolver 3.
+  - Lint policy lives in `[workspace.lints]`: `unsafe_code` forbidden; clippy `unwrap_used`, `expect_used`, `panic`, `todo`, `dbg_macro`, `print_stdout`, `print_stderr` as warnings, which CI turns into errors. `clippy.toml` allows them in tests.
+  - `deny.toml` starts with a short allow list of permissive licenses (Apache-2.0, MIT, BSD-2/3-Clause, ISC, Unicode-3.0, Zlib, Apache-2.0 WITH LLVM-exception). Yanked crates, wildcard versions, unknown registries and git sources are denied. Other licenses are added only when a dependency needs them. Tauri is known to pull in MPL-2.0 crates; that addition will be reviewed in `m1-tauri-skeleton`.
+  - Workspace crates are `publish = false`.
+- Alternatives: a floating `stable` channel (CI and local builds can then disagree, and a new clippy release can break an unrelated PR).
+- Consequences: toolchain updates are explicit `chore:` PRs.

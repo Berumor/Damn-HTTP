@@ -1,6 +1,6 @@
 # Architecture
 
-State: **plan approved** (PR #1, PR #2 and the maintainer's answers in them). No application code exists yet. Update this file whenever the structure changes.
+State: the Cargo workspace exists with empty `core`, `http`, `import` and `git` crates (`m0-cargo-workspace`). The `app` crate and the frontend arrive in `m1-tauri-skeleton`. Everything else below is the approved plan. Update this file whenever the structure changes.
 
 ## Repository layout (planned)
 
@@ -8,6 +8,8 @@ State: **plan approved** (PR #1, PR #2 and the maintainer's answers in them). No
 Cargo.toml              Cargo workspace (version 0.0.0 placeholder, shared lints and deps)
 rust-toolchain.toml     pinned stable toolchain
 deny.toml               cargo-deny config (licenses compatible with Apache-2.0)
+clippy.toml             lets tests use unwrap / expect / panic
+rustfmt.toml
 package.json            frontend + Tauri CLI scripts (pnpm)
 vite.config.ts
 crates/

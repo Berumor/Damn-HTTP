@@ -1,0 +1,30 @@
+[workspace]
+resolver = "3"
+members = ["crates/core", "crates/http", "crates/import", "crates/git"]
+
+[workspace.package]
+# Placeholder. The real version comes from the git tag and is stamped by CI at build time.
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+license = "Apache-2.0"
+repository = "https://github.com/Berumor/Damn-HTTP"
+publish = false
+
+[workspace.dependencies]
+damnhttp-core = { path = "crates/core" }
+damnhttp-http = { path = "crates/http" }
+damnhttp-import = { path = "crates/import" }
+damnhttp-git = { path = "crates/git" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
+todo = "warn"
+dbg_macro = "warn"
+print_stdout = "warn"
+print_stderr = "warn"
