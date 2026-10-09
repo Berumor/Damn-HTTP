@@ -223,3 +223,9 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
 - Context: "Share with team" (M2) must run the leak guard on the value, but the brief places the leak guard in M4.
 - Decision: the rules module in `core` (credential patterns, entropy, the D-026 path hint), with its tests and documentation, is task `m2-detection-rules`. The "Save version" warning flow that uses it stays in M4.
 - Consequences: one rules module from the start; M4 only adds UI on top of it.
+
+## D-030: Repo hygiene choices (2026-10-09, proposed)
+
+- Decision: Code of Conduct is the Contributor Covenant 2.1. Security reports go through GitHub private vulnerability reporting. Blank issues are disabled; bug and feature requests use issue forms. `NOTICE` names "Berumor and the Damn HTTP contributors" as copyright holder.
+- Alternatives: a security email address (none exists yet, and none is to be registered).
+- Consequences: the maintainer has to enable private vulnerability reporting and decide on a public contact (see `NOTES.md`).
