@@ -5,21 +5,22 @@
 - Long-lived branches: `main` (stable releases), `beta` (pre-releases), `develop` (integration). Never commit or push to them directly.
 - Short-lived branches: `feature/<task>` and `fix/<task>` from an up-to-date `develop`. `<task>` is a kebab-case slug and matches the task slug in `ROADMAP.md` (e.g. `feature/m1-file-format`). One branch = one focused task.
 - Commits: Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `chore:`, `refactor:`, `ci:`; `!` or a `BREAKING CHANGE:` footer for breaking changes), signed off with `git commit -s`. Commit often.
-- PRs target `develop`. The title is a valid Conventional Commit message (it becomes the squash commit). The description has: what changed, why, how it was tested, screenshots for UI changes, decisions recorded in `DECISIONS.md`.
+- Commits are not squashed (D-023), so each one lands on `main` and is read by the release tooling. Use `feat:` / `fix:` only for commits that should appear in release notes; a correction to work done earlier on the same branch is `refactor:`, `test:`, `docs:` or `chore:`.
+- PRs target `develop`. The title is a valid Conventional Commit message. The description has: what changed, why, how it was tested, screenshots for UI changes, decisions recorded in `DECISIONS.md`.
 - The app builds and tests pass at every PR. Docs in `docs/project/` are updated in the same PR.
 - Agents never merge. After opening a PR, continue only with work that does not depend on it. After a merge, update local `develop` and branch from there.
 - If `gh` is unavailable: push the branch, write the PR title and description into `STATUS.md`, tell the maintainer.
 - Never force-push a shared branch or rewrite pushed history.
 
-Merge strategy:
+Merge strategy: merge commits everywhere, never squash or rebase-merge (D-023).
 
 | From → to | Method |
 |---|---|
-| `feature/*`, `fix/*` → `develop` | squash |
+| `feature/*`, `fix/*` → `develop` | merge commit |
 | `develop` → `beta` | merge commit, never squash |
 | `beta` → `main` | merge commit, never squash |
 | back-merges `main` → `beta`, `main` → `develop` | merge commit |
-| hotfix `fix/*` → `main` | squash, then back-merge down the chain |
+| hotfix `fix/*` → `main` | merge commit, then back-merge down the chain |
 
 Promotion PRs are opened by the maintainer. Nothing reaches `main` without having been a beta.
 

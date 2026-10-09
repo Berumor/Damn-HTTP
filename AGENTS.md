@@ -12,7 +12,7 @@ Before doing anything else, read every file in `docs/project/`, starting with `S
 
 - Long-lived branches: `main` (stable), `beta` (pre-releases), `develop` (integration). **Never commit or push to them directly.**
 - Work on `feature/<task>` or `fix/<task>`, branched from an up-to-date `develop`. One branch = one focused task.
-- Commits: Conventional Commits, signed off (`git commit -s`).
+- Commits: Conventional Commits, signed off (`git commit -s`). PRs are merged with merge commits, never squashed, so every commit message reaches `main` and the release notes.
 - When done: push, open a PR to `develop` (`gh pr create --base develop`). The PR title is a Conventional Commit message. The description covers what, why, how tested, screenshots for UI changes, decisions recorded.
 - **Never merge PRs.** The maintainer reviews and merges. If the next task depends on an open PR, stop and say so.
 - Never force-push shared branches or rewrite pushed history.

@@ -17,7 +17,7 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
 | B-09 | Path variables use `:id`; `{{var}}` is a separate mechanism | `{id}` or `{{id}}` for paths | Parser must tell `:id` from ports; importers convert other syntaxes. |
 | B-10 | Secret values only in a git-ignored file or the OS keychain | Encrypted secrets in the repo | Teammates re-enter secrets; a leak guard warns before commit and never blocks hard. |
 | B-11 | Git vocabulary hidden by default ("Sync", "Save version", ...), Advanced toggle | Git-first UI | Simple mode stays on the default branch and never force-pushes. |
-| B-12 | Git flow: `main` / `beta` / `develop` + `feature/*`, `fix/*`; squash into `develop`, merge commits for promotions | Trunk-based | Promotion history must stay intact for release tooling. |
+| B-12 | Git flow: `main` / `beta` / `develop` + `feature/*`, `fix/*`; squash into `develop`, merge commits for promotions. **The squash part is superseded by D-023.** | Trunk-based | Promotion history must stay intact for release tooling. |
 | B-13 | semantic-release with `main` (stable) and `beta` (prerelease) channels | release-please | Versions come from Conventional Commits. |
 | B-14 | The git tag is the only source of the version; repo files stay at `0.0.0`, CI stamps at build time | `@semantic-release/git` bump commits | No bot commits on protected branches; a CI check must prove stamping works. |
 | B-15 | v1 binaries unsigned; Linux ships AppImage only | Signing, Flatpak / deb / rpm | README must explain Gatekeeper, SmartScreen, AppImage requirements. |
@@ -168,3 +168,14 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
 - Decision: requests carry an `id` (`req_` + 8 random base32 characters) generated once at creation and never changed. Environments keep their `id`. Folders and collections have none; their identity is the path. "Duplicate" generates a new id. If two files share an id (hand copy), the app warns and assigns a new id to the one that is new in git on its next save.
 - Alternatives: key local values by path and re-key them from git rename detection after each sync (fragile, and fails for a rename plus a large edit).
 - Consequences: one extra line per request file. History and open tabs can also key by id.
+
+## D-023: Merge commits everywhere, no squash (2026-10-09, accepted; supersedes the squash part of B-12)
+
+- Context: the brief says to squash `feature/*` and `fix/*` into `develop`. The maintainer said on 2026-10-09 that they prefer to keep the history, and merged PR #1 with a merge commit.
+- Decision: every PR is merged with a merge commit, including `feature/*` and `fix/*` → `develop`. Squash and rebase merging are not used.
+- Alternatives: squash into `develop` (the brief's original rule).
+- Consequences:
+  - Every commit on a feature branch reaches `develop`, `beta` and `main`, and semantic-release reads each of them. So **every commit message must be a valid Conventional Commit**, not only the PR title. `m0-ci` adds a check on all commits of a PR. The PR title check stays.
+  - Each `feat:` and `fix:` commit becomes a line in the release notes. Follow-up corrections inside a branch use the type that describes them for a user (`refactor:`, `test:`, `chore:`, `docs:`), or are folded into the commit they correct **before the branch is pushed**. Pushed history is never rewritten.
+  - The brief's rule "the app builds and tests pass at each PR" still applies to the PR head, not to every intermediate commit.
+  - Repository setting: allow merge commits only.

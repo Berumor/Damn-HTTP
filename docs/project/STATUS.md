@@ -12,7 +12,7 @@ Last updated: 2026-10-09
 
 - `develop` and `beta` created from `main` and pushed.
 - `project-plan` merged (PR #1): the plan is approved, application code may start.
-- Maintainer's answers from PR #1 recorded: D-019 (secrets in a git-ignored file only), D-020 (proxy, CA, TLS verification local), D-021 (literal query / path variable values never committed), D-022 (request ids, proposed). `ARCHITECTURE.md` file format draft updated to match.
+- Maintainer's answers from PR #1 recorded: D-019 (secrets in a git-ignored file only), D-020 (proxy, CA, TLS verification local), D-021 (literal query / path variable values never committed), D-022 (request ids, proposed). Merge strategy changed to merge commits everywhere, no squash (D-023). `ARCHITECTURE.md` file format draft updated to match.
 
 ## In progress
 
