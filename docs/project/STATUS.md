@@ -4,15 +4,16 @@ Last updated: 2026-10-09
 
 ## Current
 
-- Milestone: **Plan** (before M0)
-- Task: `plan-decisions`, branch `feature/plan-decisions`
+- Milestone: **M0** (CI basics and repo hygiene)
+- Task: `plan-answers`, branch `feature/plan-answers`
 - State: PR open, waiting for the maintainer. Docs only.
 
 ## Done
 
 - `develop` and `beta` created from `main` and pushed.
 - `project-plan` merged (PR #1): the plan is approved, application code may start.
-- Maintainer's answers from PR #1 recorded: D-019 (secrets in a git-ignored file only), D-020 (proxy, CA, TLS verification local), D-021 (literal query / path variable values never committed), D-022 (request ids, proposed). Merge strategy changed to merge commits everywhere, no squash (D-023). `ARCHITECTURE.md` file format draft updated to match.
+- `plan-decisions` merged (PR #2): D-019 to D-023.
+- Maintainer's answers from PR #2 recorded: D-022 accepted and amended (UUID ids, first line, duplicate repair), D-024 to D-028 accepted, D-029 proposed (rules module moves to M2). No open questions remain.
 
 ## In progress
 
@@ -20,14 +21,13 @@ Last updated: 2026-10-09
 
 ## Blocked
 
-- `m1-core-model` and later M1 tasks: need answers to the six questions in `NOTES.md` (all about D-021 / D-022).
 - `m0-cargo-workspace`, `m0-ci` and all later code: Rust and Node are not installed on the maintainer's machine (see `NOTES.md`).
 
 ## Open PRs
 
-- `docs: record plan decisions from PR #1 review` (`feature/plan-decisions` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/2
+- `docs: record maintainer answers from PR #2` (`feature/plan-answers` → `develop`): PR_URL
 
 ## Exact next step
 
-1. When the `plan-decisions` PR is merged: `git switch develop && git pull`. If the maintainer answered the questions in `NOTES.md`, record the answers first (mark D-022 `accepted` or supersede it, update `ARCHITECTURE.md`).
-2. Start M0 with `feature/m0-repo-hygiene` (needs no toolchain, does not depend on the open questions), then `feature/m0-cargo-workspace`, then `feature/m0-ci` (both need the toolchain).
+1. `feature/m0-repo-hygiene` (needs no toolchain). It is branched from `feature/plan-answers`, so merge the `plan-answers` PR first.
+2. Then `feature/m0-cargo-workspace` and `feature/m0-ci`, both of which need the toolchain installed.

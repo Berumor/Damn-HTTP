@@ -1,6 +1,6 @@
 # Decisions
 
-ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or approved by the maintainer), `proposed` (made by an agent, awaiting review in the PR that introduced it) or `superseded by D-nnn`. D-001 to D-018 were approved by the merge of PR #1, with the changes the maintainer made in that PR's comment (D-019 to D-021). Never delete an entry; supersede it with a new one.
+ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or approved by the maintainer), `proposed` (made by an agent, awaiting review in the PR that introduced it) or `superseded by D-nnn`. D-001 to D-018 were approved by the merge of PR #1, with the changes the maintainer made in that PR's comment (D-019 to D-021). D-022 and D-024 to D-029 come from the maintainer's answers in PR #2. Never delete an entry; supersede it with a new one.
 
 ## Decisions made in the brief (2026-10-09, accepted)
 
@@ -162,12 +162,17 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
 - Alternatives: commit example values (what Postman, Bruno and Insomnia do).
 - Consequences: a cloned request is not runnable until values are filled in. Values a team wants to share go through a collection or environment variable. A future `damnhttp run` CLI needs values supplied from variables.
 
-## D-022: Requests get a stable `id` (2026-10-09, proposed; supersedes D-006)
+## D-022: Requests get a stable `id` (2026-10-09, accepted; supersedes D-006)
 
 - Context: D-021 keys local values "by request". With identity = file path (D-006), a teammate renaming or moving a request would orphan everyone else's local values on the next sync.
 - Decision: requests carry an `id` (`req_` + 8 random base32 characters) generated once at creation and never changed. Environments keep their `id`. Folders and collections have none; their identity is the path. "Duplicate" generates a new id. If two files share an id (hand copy), the app warns and assigns a new id to the one that is new in git on its next save.
 - Alternatives: key local values by path and re-key them from git rename detection after each sync (fragile, and fails for a rename plus a large edit).
 - Consequences: one extra line per request file. History and open tabs can also key by id.
+- Amended by the maintainer in PR #2 (this replaces the id format and duplicate rule above):
+  - The id is a UUID v4 (lowercase, hyphenated), generated once at creation, never changed on save, and written as the **first line** of the request file. Environment ids use the same format.
+  - Duplicate ids are detected on load (a file copied by hand). The copy gets a new id: the copy is the file that is untracked or newer in git; if that cannot be told, the one whose path sorts later.
+  - The Duplicate action creates a new id and copies the local values.
+  - A "Clear unused local data" action removes local values whose request id no longer exists.
 
 ## D-023: Merge commits everywhere, no squash (2026-10-09, accepted; supersedes the squash part of B-12)
 
@@ -179,3 +184,42 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
   - Each `feat:` and `fix:` commit becomes a line in the release notes. Follow-up corrections inside a branch use the type that describes them for a user (`refactor:`, `test:`, `chore:`, `docs:`), or are folded into the commit they correct **before the branch is pushed**. Pushed history is never rewritten.
   - The brief's rule "the app builds and tests pass at each PR" still applies to the PR head, not to every intermediate commit.
   - Repository setting: allow merge commits only.
+
+## D-024: A value is a reference only if it is exactly one `{{name}}` (2026-10-09, accepted)
+
+- Context: D-021 commits query and path variable values only when they are references.
+- Decision: after trimming, the whole value must be exactly one `{{name}}`; spaces inside the braces are allowed (`{{ name }}`). Anything else, including `{{a}}-1` and `{{a}}{{b}}`, is a literal and stays local as a whole. The UI shows a short explanation when a value is kept local for this reason.
+- Consequences: one simple test decides where a value is stored. Files are written in the canonical form `{{name}}`.
+
+## D-025: D-021 covers query params and path variables only in v1 (2026-10-09, accepted)
+
+- Decision: header values, bodies and form fields are committed as written. The secret-leak guard scans all of them.
+- Consequences: a per-field "keep local" option for headers and body fields is a possible later feature (see `NOTES.md`).
+
+## D-026: Literals in the URL path or host are accepted, with a soft hint (2026-10-09, accepted)
+
+- Context: in `/it/stations/1234` the app cannot tell data from fixed path text.
+- Decision: accept the limitation and document it in `docs/FORMAT.md` and the README. Add a hint, never blocking, in the same rules module as the leak guard: for a path segment that is purely numeric, a UUID, or a 24-character hex string, offer "Turn this into a path variable?", which rewrites the segment to `:id` and moves the value to local values. Tests hold it to a low false-positive bar.
+- Consequences: short numeric segments such as `/v1` or `/2024` contain letters or are plausible fixed text; the rule set must not fire on API version segments.
+
+## D-027: "Share with team" and "Make local again" (2026-10-09, accepted)
+
+- Decision: "Share with team" on a local query or path variable value moves the literal into a collection variable (committed, not secret) and replaces the value with `{{name}}`. The name is suggested from the param name; if that name exists with a different value, the user is asked for another. The leak guard runs on the value first, and a confirmation says the value will be committed and visible to the team. "Make local again" reverses it: the param gets the literal back as a local value. Collection scope only in v1.
+- Consequences: "Make local again" leaves the collection variable in place when other requests still reference it.
+
+## D-028: Sparse `path_params`, one shared URL parser (2026-10-09, accepted)
+
+- Decision:
+  - `path_params` in a request file lists a variable only when it has a `{{name}}` value or a description. Names are always derived from `url`.
+  - One parser, in `core`, derives them, and both the file loader and the UI use it. The UI calls it through a Tauri command (`url_analyze`) and has no parser of its own.
+  - The parser ignores the scheme, ports such as `localhost:8080`, and anything inside `{{ }}`. Names match `[A-Za-z_][A-Za-z0-9_]*`. This extends D-013.
+  - An entry whose name no longer appears in the URL is flagged on load and dropped on the next save.
+  - When a name changes in the URL, its local value and sparse entry move with it. A change counts as a rename when exactly one name disappears and one appears in the same edit.
+- Alternatives: a second parser in TypeScript for instant highlighting (two implementations that can disagree).
+- Consequences: URL highlighting in the editor is asynchronous (debounced IPC call).
+
+## D-029: The detection rules module is built in M2, its commit-time UI in M4 (2026-10-09, proposed)
+
+- Context: "Share with team" (M2) must run the leak guard on the value, but the brief places the leak guard in M4.
+- Decision: the rules module in `core` (credential patterns, entropy, the D-026 path hint), with its tests and documentation, is task `m2-detection-rules`. The "Save version" warning flow that uses it stays in M4.
+- Consequences: one rules module from the start; M4 only adds UI on top of it.
