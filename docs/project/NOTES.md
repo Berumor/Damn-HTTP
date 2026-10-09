@@ -17,7 +17,6 @@ None. The questions from PR #1 and PR #2 are answered and recorded in `DECISIONS
 - [ ] **Repository settings** (full list will be in `docs/RELEASING.md`, M7). Useful now: allow merge commits only, disable squash and rebase merging (D-023); after `m0-ci` merges, protect `main`, `beta`, `develop` and require the CI checks.
 - [ ] **Enable private vulnerability reporting** (repository Settings → Security). `SECURITY.md` and the issue chooser point reporters to it.
 - [ ] **Give a contact for the Code of Conduct and security reports.** `CODE_OF_CONDUCT.md` and `SECURITY.md` currently say "the contact details on @Berumor's GitHub profile". Supply an email address to print there, or make sure the profile shows one.
-- [ ] **Create the `bug` and `enhancement` labels** if they are missing; the issue templates apply them.
 - [ ] **Real exports for importer fixtures (M5).** Redistributable, with secrets removed: a large real Postman v2.1 collection plus its environments, an Insomnia v4 export, a Bruno collection, and any internal OpenAPI / Swagger specs that have caused trouble in other tools. A precise list will be written when M5 starts.
 
 ## Platform findings
