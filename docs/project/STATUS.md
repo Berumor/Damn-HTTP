@@ -28,7 +28,7 @@ Last updated: 2026-10-09
 ## Open PRs
 
 - `chore: add cargo workspace with empty crates` (`feature/m0-cargo-workspace` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/5
-- `ci: add CI workflow with Rust, license, PR title and commit checks` (`feature/m0-ci` → `develop`): PR_URL. Contains the commits of PR #5; merge #5 first.
+- `ci: add CI workflow with Rust, license, PR title and commit checks` (`feature/m0-ci` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/6. Contains the commits of PR #5; merge #5 first.
 
 ## Exact next step
 
