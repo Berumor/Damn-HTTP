@@ -26,7 +26,7 @@ Last updated: 2026-10-09
 
 ## Open PRs
 
-- `chore: add cargo workspace with empty crates` (`feature/m0-cargo-workspace` → `develop`): PR_URL
+- `chore: add cargo workspace with empty crates` (`feature/m0-cargo-workspace` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/5
 
 ## Exact next step
 
