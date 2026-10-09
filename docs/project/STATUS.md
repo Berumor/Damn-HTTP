@@ -24,7 +24,7 @@ Last updated: 2026-10-09
 
 ## Open PRs
 
-- `docs: add project plan and project memory` (`feature/project-plan` → `develop`): PR_URL
+- `docs: add project plan and project memory` (`feature/project-plan` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/1
 
 ## Exact next step
 
