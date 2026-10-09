@@ -78,6 +78,22 @@ The Rust commands work today. The frontend commands are planned; correct this se
 | Build installers | `pnpm tauri build` | `m1-tauri-skeleton` |
 | Smoke test | `pnpm e2e` | `m1-smoke-test` |
 
+## CI
+
+`.github/workflows/ci.yml` runs on pull requests to, and pushes to, `develop`, `beta` and `main`.
+
+| Job | Runs on | What it checks |
+|---|---|---|
+| Rust | PR and push | `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, with `--locked` |
+| cargo-deny | PR and push | licenses, advisories, bans, sources (`deny.toml`) |
+| PR title | PR | the title is a Conventional Commit |
+| Commits | PR | every non-merge commit is a Conventional Commit and signed off by its author (`.github/scripts/check-commits.sh`) |
+
+- Third-party actions are pinned to a commit SHA with the version in a comment. Update the SHA and the comment together.
+- The allowed commit types are listed twice, in `ci.yml` and in `check-commits.sh`. Keep them in sync.
+- A `git revert` commit must be reworded to `revert: ...` to pass the commit check.
+- To run the commit check locally: `.github/scripts/check-commits.sh origin/develop HEAD`.
+
 ## Docs
 
 - `docs/project/`: project memory, short and factual.
