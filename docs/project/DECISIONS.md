@@ -230,7 +230,7 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
 - Alternatives: a security email address (none exists yet, and none is to be registered).
 - Consequences: the maintainer has to enable private vulnerability reporting and decide on a public contact (see `NOTES.md`).
 
-## D-031: Cargo workspace settings (2026-10-09, proposed)
+## D-031: Cargo workspace settings (2026-10-09, accepted)
 
 - Decision:
   - Toolchain pinned to an exact stable version (`1.99.0`) in `rust-toolchain.toml`; `rust-version = "1.99"`; edition 2024; resolver 3.
@@ -240,8 +240,16 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
 - Alternatives: a floating `stable` channel (CI and local builds can then disagree, and a new clippy release can break an unrelated PR).
 - Consequences: toolchain updates are explicit `chore:` PRs.
 
-## D-032: CI layout (2026-10-09, proposed)
+## D-032: CI layout (2026-10-09, accepted)
 
 - Decision: one workflow, `ci.yml`, with four jobs: Rust (fmt, clippy, tests), cargo-deny, PR title, Commits. The Commits job is a shell script in the repo that checks Conventional Commits and DCO sign-off on every non-merge commit of the PR (D-015, D-023). Allowed types: `feat`, `fix`, `docs`, `test`, `chore`, `refactor`, `ci`, `build`, `perf`, `revert`. Rust jobs run on `ubuntu-24.04` only; other platforms are covered by the packaging check in M1. Actions are pinned by SHA. The workflow token is read-only.
 - Alternatives: commitlint (needs Node tooling in the repo before the frontend exists); running Rust tests on all three OSes on every PR (slow; revisit when platform-specific code such as git process handling arrives in M3).
 - Consequences: the sign-off must carry the commit author's email, so commits authored by bots (e.g. Dependabot) would fail until an exemption is added.
+
+## D-033: The committed / local split is enforced by a type (2026-10-09, proposed)
+
+- Context: D-021 says a literal query or path variable value must never reach a committed file by accident.
+- Decision: the editor works on `Request`, which holds every value. `Request::split()` returns a `CommittedRequest` and the `RequestLocalValues`. `CommittedRequest` has no other constructor, and the file writer (`m1-file-format`) will accept only that type. The file loader also goes through `split()`, so a literal in a hand-edited file is moved to local values on load. `CommittedRequest::merge()` puts local values back; where the committed file holds a reference, the reference wins over a stale local value.
+- Details: repeated query names are matched by occurrence index among parameters of the same name. An empty value is stored nowhere. References are rewritten to the canonical `{{name}}`.
+- Alternatives: one `Request` type and a check in the serializer (a forgotten check leaks a value; a type cannot be forgotten).
+- Consequences: the model has no `serde` derives yet. They are added in `m1-file-format` / `m1-tauri-skeleton`, and `CommittedRequest` must not gain a public constructor or a `Deserialize` impl that bypasses `split()`. The same pattern will be used for secret environment values in `m2-secrets`.
