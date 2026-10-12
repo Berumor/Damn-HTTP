@@ -17,6 +17,9 @@ damnhttp-http = { path = "crates/http" }
 damnhttp-import = { path = "crates/import" }
 damnhttp-git = { path = "crates/git" }
 
+# Test-only: validates the JSON Schemas in schemas/ against our files.
+boon = "0.6.1"
+serde_json = "1.0.145"
 # Pinned exactly: 0.x releases may change the event API the reader relies on.
 saphyr-parser = "=0.2.1"
 thiserror = "2.0.21"

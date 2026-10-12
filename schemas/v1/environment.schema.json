@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Berumor/Damn-HTTP/main/schemas/v1/environment.schema.json",
+  "title": "Damn HTTP environment (environments/*.yaml)",
+  "type": "object",
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "version": { "$ref": "common.schema.json#/$defs/version" },
+    "kind": { "const": "environment" },
+    "name": { "$ref": "common.schema.json#/$defs/name" },
+    "variables": { "$ref": "common.schema.json#/$defs/variables" }
+  },
+  "required": ["id", "version", "kind", "name"],
+  "additionalProperties": false
+}

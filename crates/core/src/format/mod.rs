@@ -28,6 +28,8 @@ mod tree;
 mod values;
 
 #[cfg(test)]
+mod schema_tests;
+#[cfg(test)]
 mod tests;
 
 pub use containers::{

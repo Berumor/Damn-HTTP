@@ -13,5 +13,9 @@ saphyr-parser = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true }
 
+[dev-dependencies]
+boon = { workspace = true }
+serde_json = { workspace = true }
+
 [lints]
 workspace = true

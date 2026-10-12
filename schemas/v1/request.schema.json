@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Berumor/Damn-HTTP/main/schemas/v1/request.schema.json",
+  "title": "Damn HTTP request (one file per request)",
+  "type": "object",
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "version": { "$ref": "common.schema.json#/$defs/version" },
+    "kind": { "const": "request" },
+    "name": { "$ref": "common.schema.json#/$defs/name" },
+    "order": { "$ref": "common.schema.json#/$defs/order" },
+    "description": { "$ref": "common.schema.json#/$defs/description" },
+    "method": {
+      "description": "GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS or any other HTTP method token.",
+      "type": "string",
+      "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
+    },
+    "url": {
+      "description": "URL template without a query string. May contain {{variables}} and :pathVariables.",
+      "type": "string"
+    },
+    "path_params": {
+      "description": "Only path variables with a reference value or a description are listed; names come from the URL.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+          "value": { "$ref": "common.schema.json#/$defs/reference" },
+          "description": { "$ref": "common.schema.json#/$defs/description" }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      }
+    },
+    "query": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "value": { "$ref": "common.schema.json#/$defs/reference" },
+          "enabled": { "type": "boolean" },
+          "description": { "$ref": "common.schema.json#/$defs/description" }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      }
+    },
+    "headers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "value": { "type": "string" },
+          "enabled": { "type": "boolean" },
+          "description": { "$ref": "common.schema.json#/$defs/description" }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      }
+    },
+    "auth": {
+      "description": "Absent means inherit from the folder or collection.",
+      "$ref": "common.schema.json#/$defs/auth"
+    },
+    "body": { "$ref": "#/$defs/body" },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "follow_redirects": { "type": "boolean" },
+        "max_redirects": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+        "timeout_ms": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["id", "version", "kind", "name", "order", "method", "url"],
+  "additionalProperties": false,
+  "$defs": {
+    "body": {
+      "type": "object",
+      "properties": {
+        "type": { "enum": ["none", "json", "text", "form-urlencoded", "multipart"] }
+      },
+      "required": ["type"],
+      "oneOf": [
+        {
+          "properties": { "type": { "const": "none" } },
+          "propertyNames": { "enum": ["type"] }
+        },
+        {
+          "properties": { "type": { "const": "json" }, "content": { "type": "string" } },
+          "propertyNames": { "enum": ["type", "content"] }
+        },
+        {
+          "properties": {
+            "type": { "const": "text" },
+            "content": { "type": "string" },
+            "content_type": { "type": "string" }
+          },
+          "propertyNames": { "enum": ["type", "content", "content_type"] }
+        },
+        {
+          "properties": {
+            "type": { "const": "form-urlencoded" },
+            "fields": { "type": "array", "items": { "$ref": "#/$defs/textField" } }
+          },
+          "propertyNames": { "enum": ["type", "fields"] }
+        },
+        {
+          "properties": {
+            "type": { "const": "multipart" },
+            "fields": {
+              "type": "array",
+              "items": { "oneOf": [{ "$ref": "#/$defs/textField" }, { "$ref": "#/$defs/fileField" }] }
+            }
+          },
+          "propertyNames": { "enum": ["type", "fields"] }
+        }
+      ]
+    },
+    "textField": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "value": { "type": "string" },
+        "enabled": { "type": "boolean" }
+      },
+      "required": ["name"],
+      "additionalProperties": false
+    },
+    "fileField": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "file": { "description": "Path relative to the workspace root.", "type": "string" },
+        "enabled": { "type": "boolean" }
+      },
+      "required": ["name", "file"],
+      "additionalProperties": false
+    }
+  }
+}
