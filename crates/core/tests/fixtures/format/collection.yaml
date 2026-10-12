@@ -1,0 +1,14 @@
+version: 1
+kind: collection
+name: Petstore
+order: a0
+description: The public Petstore API.
+variables:
+  - name: apiVersion
+    value: v2
+  - name: pageSize
+    value: "50"
+    description: Default page size for list endpoints.
+auth:
+  type: bearer
+  token: "{{apiToken}}"

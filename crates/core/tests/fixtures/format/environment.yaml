@@ -1,0 +1,12 @@
+id: b81d0c34-5e2f-4a67-8f19-6c3e9a7d2b05
+version: 1
+kind: environment
+name: Staging
+variables:
+  - name: baseUrl
+    value: https://staging.example.com
+  - name: apiToken
+    secret: true
+    description: Ask the team lead for a staging token.
+  - name: tenantId
+    value: acme
