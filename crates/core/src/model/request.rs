@@ -196,6 +196,9 @@ impl Request {
                 self.method.as_str().to_owned(),
             ));
         }
+        if crate::url::analyze(&self.url).query.is_some() {
+            errors.push(ValidationError::QueryInUrl);
+        }
         let mut seen = HashSet::new();
         for param in &self.path_params {
             if !is_valid_path_variable_name(&param.name) {

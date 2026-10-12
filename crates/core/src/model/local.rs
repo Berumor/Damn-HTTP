@@ -109,6 +109,8 @@ impl Request {
     /// - A path variable is kept in the committed part only if it has a
     ///   reference value or a description (D-028).
     /// - `skip_tls_verify` moves to the local values.
+    /// - A query string left inside `url` is moved to the query table first,
+    ///   so its values are treated like any other query value.
     ///
     /// The file loader calls this too: a literal found in a hand-edited file
     /// is moved to local values instead of being kept.
@@ -118,6 +120,7 @@ impl Request {
             ..RequestLocalValues::default()
         };
         self.skip_tls_verify = false;
+        self.move_query_out_of_url();
 
         let mut occurrences: HashMap<String, usize> = HashMap::new();
         for param in &mut self.query {
