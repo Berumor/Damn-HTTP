@@ -695,3 +695,26 @@ fn any_string_survives_the_writer_and_the_parser() {
         assert_eq!(keys[0].key, s, "{text}");
     }
 }
+
+/// Every `yaml` example in `docs/FORMAT.md` loads and is already in the
+/// canonical form, so the spec cannot drift from the code.
+#[test]
+fn the_examples_in_the_spec_are_canonical() {
+    let spec = include_str!("../../../../docs/FORMAT.md");
+    let mut examples = 0;
+    for block in spec.split("```yaml\n").skip(1) {
+        let text = &block[..block.find("```").unwrap()];
+        let rewritten = match text.lines().find_map(|l| l.strip_prefix("kind: ")) {
+            Some("workspace") => write_workspace(&read_workspace(text).unwrap()),
+            Some("collection") => write_collection(&read_collection(text).unwrap()),
+            Some("folder") => write_folder(&read_folder(text).unwrap()),
+            Some("request") => write_request(&read_request(text).unwrap().request),
+            Some("environment") => write_environment(&read_environment(text).unwrap().environment),
+            Some("values") => write_local_values(&read_local_values(text).unwrap()),
+            other => panic!("unknown kind {other:?} in:\n{text}"),
+        };
+        assert_eq!(rewritten, text);
+        examples += 1;
+    }
+    assert!(examples >= 5, "{examples}");
+}
