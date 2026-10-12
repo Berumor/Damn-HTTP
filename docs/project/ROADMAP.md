@@ -10,18 +10,18 @@ Legend: `[ ]` todo, `[~]` in progress or PR open, `[x]` merged.
 - [x] `plan-decisions`: maintainer's answers from PR #1 (D-019 to D-022), merge strategy change (D-023). Merged (PR #2).
 - [x] `plan-answers`: maintainer's answers from PR #2 (D-022 amended, D-024 to D-029).
 
-## M0: CI basics and repo hygiene
+## M0: CI basics and repo hygiene (complete)
 
 - [x] `m0-repo-hygiene`: `NOTICE`, `CONTRIBUTING.md` (DCO, no CLA), `CODE_OF_CONDUCT.md`, `SECURITY.md`, README expansion, issue templates (bug, feature), PR template, `.editorconfig`, `.gitignore` for Rust + Node. (`LICENSE` already exists.)
-- [~] `m0-cargo-workspace`: Cargo workspace with empty `core`, `http`, `import`, `git` crates, `rust-toolchain.toml`, shared lints, `rustfmt.toml`, `deny.toml`.
-- [~] `m0-ci`: GitHub Actions on PRs and pushes to `develop` / `beta` / `main`: fmt, clippy (deny warnings), tests, `cargo-deny`, dependency caching, PR title check (Conventional Commits), Conventional Commits check on every commit of the PR (D-023), DCO sign-off check. Frontend jobs are added in `m1-tauri-skeleton`.
+- [x] `m0-cargo-workspace`: Cargo workspace with empty `core`, `http`, `import`, `git` crates, `rust-toolchain.toml`, shared lints, `rustfmt.toml`, `deny.toml`.
+- [x] `m0-ci`: GitHub Actions on PRs and pushes to `develop` / `beta` / `main`: fmt, clippy (deny warnings), tests, `cargo-deny`, dependency caching, PR title check (Conventional Commits), Conventional Commits check on every commit of the PR (D-023), DCO sign-off check. Frontend jobs are added in `m1-tauri-skeleton`.
 
 ## M1: model, file format, request editor, send, response viewer
 
-- [ ] `m1-core-model`: data model and validation in `core`, including the committed / local split of query and path variable values (D-021) request ids as UUIDs (D-022) and the reference rule (D-024).
+- [~] `m1-core-model`: data model and validation in `core`, including the committed / local split of query and path variable values (D-021) request ids as UUIDs (D-022) and the reference rule (D-024).
 - [ ] `m1-file-format`: deterministic YAML emitter + parser, round-trip and determinism tests, a test that no literal query / path value can be serialized into a request file, JSON Schemas in `schemas/`, first `docs/FORMAT.md`.
 - [ ] `m1-workspace-store`: on-disk operations in `core`: create/open, tree, CRUD, rename, duplicate, move, ordering, slug collisions, `.gitignore` management, the local values store in `.damnhttp/`, duplicate-id repair on load, "clear unused local data". Tests on temp dirs.
-- [ ] `m1-path-variables`: the single shared URL parser in `core` (D-028): path variable names, `{{ }}` skipping, query split, `:id` substitution, rename detection, sparse `path_params` handling. Tests for schemes, ports and the other edge cases.
+- [ ] `m1-path-variables`: the single shared URL parser in `core` (D-028), including the check that a committed `url` has no query string: path variable names, `{{ }}` skipping, query split, `:id` substitution, rename detection, sparse `path_params` handling. Tests for schemes, ports and the other edge cases.
 - [ ] `m1-http-engine`: `http` crate: reqwest + rustls, redirects, timeouts, proxy, custom CA, skip TLS verification, timing, sizes, cancellation, body to temp file. Tests against a local server.
 - [ ] `m1-tauri-skeleton`: `app` crate, Tauri 2 + Vite + React + TS strict + Zustand, tauri-specta bindings, restrictive capabilities, app identifier in one place, theme and i18n scaffolding, ESLint, Vitest, frontend CI jobs (lint, typecheck, tests).
 - [ ] `m1-packaging-check`: build-only workflow for Linux AppImage (`ubuntu-22.04`), macOS arm64 + x86_64 `.dmg`, Windows NSIS. Run the AppImage on CachyOS and write findings to `NOTES.md`. Done right after the skeleton, before the UI work.

@@ -1,6 +1,6 @@
 # Architecture
 
-State: the Cargo workspace exists with empty `core`, `http`, `import` and `git` crates (`m0-cargo-workspace`). The `app` crate and the frontend arrive in `m1-tauri-skeleton`. Everything else below is the approved plan. Update this file whenever the structure changes.
+State: the Cargo workspace exists. `core` has the data model (`m1-core-model`); `http`, `import` and `git` are empty. The `app` crate and the frontend arrive in `m1-tauri-skeleton`. Sections describing later tasks are the approved plan.
 
 ## Repository layout (planned)
 
@@ -65,6 +65,22 @@ ResolvedRequest ─> http: execute ─> ResponseMeta (+ body written to a temp f
 Response bodies are not serialized into the JSON result. `http_send` returns metadata plus a `response_id`; the frontend then reads the body in ranges as raw bytes. Pretty-printing JSON happens in Rust. This keeps multi-MB responses from freezing the webview (D-012).
 
 ## Data model (`core`)
+
+Implemented in `crates/core/src/`:
+
+| Module | Contents |
+|---|---|
+| `reference` | The `{{name}}` rule (D-024): `reference_name`, `canonical_reference`, variable and path variable name checks. |
+| `model::id` | `RequestId`, `EnvironmentId`: UUID v4, one accepted spelling. |
+| `model::order` | `OrderKey`: validated fractional-index key. Generating keys is the workspace store's job. |
+| `model::request` | `Request`, `Method`, `QueryParam`, `PathParam`, `Header`, `Body`, `Part`, `RequestSettings`. |
+| `model::local` | `Request::split()` → (`CommittedRequest`, `RequestLocalValues`) and `CommittedRequest::merge()`. `CommittedRequest` can only be built by `split()`, and it is the only type the file writer will accept (D-033). |
+| `model::auth` | `Auth`. |
+| `model::variable` | `Variable`, `Environment`. |
+| `model::collection` | `Workspace`, `Collection`, `Folder`: each item's own settings. The tree is the directory structure and belongs to the workspace store. |
+| `model::validation` | `ValidationError`; every `validate()` returns all problems found. |
+
+Differences from the table below, decided while implementing: form bodies use `Part` (text or file; a file in a urlencoded body is a validation error); `RequestSettings` fields are optional, `None` meaning the app default; `Request` carries `skip_tls_verify`, which `split()` moves to the local values.
 
 | Type | Fields |
 |---|---|
