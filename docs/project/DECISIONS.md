@@ -254,14 +254,14 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
 - Alternatives: one `Request` type and a check in the serializer (a forgotten check leaks a value; a type cannot be forgotten).
 - Consequences: the model has no `serde` derives yet (`m1-file-format` did not need them: the format is mapped by hand, D-035). They may be added in `m1-tauri-skeleton`, and `CommittedRequest` must not gain a public constructor or a `Deserialize` impl that bypasses `split()`. The same pattern will be used for secret environment values in `m2-secrets`.
 
-## D-034: `saphyr-parser` reads YAML (2026-10-12, proposed)
+## D-034: `saphyr-parser` reads YAML (2026-10-12, accepted)
 
 - Context: D-008 leaves the choice of the YAML parser to `m1-file-format`. Output is our own emitter; the parser only has to read.
 - Decision: `saphyr-parser` 0.2.1, pinned exactly (`=0.2.1`). It is an event parser (MIT OR Apache-2.0, YAML 1.2, passes the yaml-test-suite, dependencies `arraydeque` and `thiserror` only). We build our own small tree from its events, keeping scalar styles, anchors, tags and positions, which a loaded `Yaml` value would hide.
 - Alternatives: `yaml-rust2` (same lineage; its `encoding` default feature pulls `encoding_rs`, and `deny.toml` checks all features); `saphyr` (adds a loader we do not need); serde-based crates such as `serde-saphyr` (typing by serde instead of by our schema; `serde_yml` is deprecated).
 - Consequences: a 0.x crate, so upgrades are deliberate: bump the pin in its own PR and run the format tests. Its columns are 0-based although documented as 1-based; `format::tree` adds 1.
 
-## D-035: How files are read (2026-10-12, proposed)
+## D-035: How files are read (2026-10-12, accepted)
 
 - Decision:
   - Scalars are typed by the key, not by YAML resolution: string keys take the text of any scalar (`value: 8080` is `"8080"`, `name: no` is `"no"`); booleans are only plain `true` / `false`; numbers only plain digits. An empty value, `~` or `null` counts as absent.
@@ -272,7 +272,7 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
 - Alternatives: YAML's own typing (the "Norway problem": `no` becomes `false`); refusing non-canonical styles (hostile to hand edits).
 - Consequences: a hand-written file may differ from the canonical form; the next save rewrites it canonically.
 
-## D-036: Writer details (2026-10-12, proposed)
+## D-036: Writer details (2026-10-12, accepted)
 
 - Decision:
   - A string is written plain only when no YAML 1.1 or 1.2 reader could read it as anything else; the rule is deliberately conservative (anything starting with a digit, `+` or `.` is quoted, except a UUID). Otherwise double-quoted, with control and invisible characters escaped. Multi-line text uses `|`, `|-` or `|+` (with an indentation indicator when the first line starts with a space); text with `\r` or characters needing escapes is double-quoted instead.
@@ -282,8 +282,24 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
   - `.damnhttp/values.yaml` also has `kind: values`, so every file the app writes identifies itself.
 - Consequences: these choices are now the v1 format (expensive to change once teams have files).
 
-## D-037: JSON Schemas (2026-10-12, proposed)
+## D-037: JSON Schemas (2026-10-12, accepted)
 
 - Decision: one schema per kind in `schemas/v1/`, a `common.schema.json` for shared definitions, and `file.schema.json` that selects the schema by `kind`, so an editor needs one glob. Draft 2020-12. `$id`s point at `raw.githubusercontent.com/Berumor/Damn-HTTP/main/schemas/v1/`. The schemas flag literal query / path values and secret values, which the app would move out of the file. A test validates the fixtures, the writer's output and known-bad files with `boon` (dev-dependency only).
 - Alternatives: one schema per kind only (editors would need per-file globs that cannot tell `folder.yaml` from a request); `jsonschema` crate for the test (MIT only, and with all features it pulls Python and Ruby bindings into the `cargo-deny` graph).
 - Consequences: the schemas expect YAML strings for string keys, so an editor flags `value: 8080` although the app accepts it. The `$id` URLs resolve only once the schemas reach `main`.
+
+## D-038: Workspace store behaviour (2026-10-12, proposed)
+
+- Context: `m1-workspace-store` had to settle details the plan left open.
+- Decision:
+  - **Order keys** follow the common fractional-indexing layout (integer part whose first character gives its length, then a fraction): `a0`, `a1`, ..., `a0V`. A sibling group is rewritten with fresh keys only when an item cannot be placed: equal neighbours, a hand-written key outside the layout, or a new key longer than 12 characters.
+  - **Slugs** are ASCII only, at most 60 characters, with a small table for accented Latin letters; names with no usable character become `untitled`. Collisions are checked without case and across files and directories. Windows-reserved names and `collection` / `folder` get `-item`.
+  - **Paths** given to the store must stay under `collections/`. Symbolic links and dot-files are skipped, never followed.
+  - **Delete keeps local values.** Restoring the files with git brings the values back; "Clear unused local data" removes them. That action refuses to run while any file is unreadable, because an unreadable request's id is unknown.
+  - **Duplicate ids:** the file whose path sorts first keeps the id; copies get a new id and a copy of the local values. The git-aware rule from D-022 (the untracked or newer file is the copy) needs the git engine and is added in M3.
+  - **Duplicate** copies YAML items only; other files inside a folder (for example attachments for multipart bodies) are not copied.
+  - **Rename is its own operation.** Saving a request never renames its file. The id of an existing file cannot be changed by a save.
+  - **Opening a workspace adds `/.damnhttp/` to `.gitignore`** if no equivalent line is in effect.
+  - **Writes are atomic** and skipped when the content is unchanged, so saving without changes does not touch the file.
+- Alternatives: Unicode slugs (file names then differ between macOS and Linux for the same text); deleting local values together with the request (a `git restore` would bring back the request without them).
+- Consequences: `docs/FORMAT.md` describes the slug and order-key rules. The store is synchronous; the `app` crate must call it off the UI thread.

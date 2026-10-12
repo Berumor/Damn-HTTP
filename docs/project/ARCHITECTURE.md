@@ -1,6 +1,6 @@
 # Architecture
 
-State: the Cargo workspace exists. `core` has the data model (`m1-core-model`) and the file format (`m1-file-format`); `http`, `import` and `git` are empty. The `app` crate and the frontend arrive in `m1-tauri-skeleton`. Sections describing later tasks are the approved plan.
+State: the Cargo workspace exists. `core` has the data model (`m1-core-model`), the file format (`m1-file-format`) and the workspace store (`m1-workspace-store`); `http`, `import` and `git` are empty. The `app` crate and the frontend arrive in `m1-tauri-skeleton`. Sections describing later tasks are the approved plan.
 
 ## Repository layout (planned)
 
@@ -72,7 +72,7 @@ Implemented in `crates/core/src/`:
 |---|---|
 | `reference` | The `{{name}}` rule (D-024): `reference_name`, `canonical_reference`, variable and path variable name checks. |
 | `model::id` | `RequestId`, `EnvironmentId`: UUID v4, one accepted spelling. |
-| `model::order` | `OrderKey`: validated fractional-index key. Generating keys is the workspace store's job. |
+| `model::order` | `OrderKey`: validated fractional-index key, `first()`, `between()` and `sequence()` to generate keys (D-038). |
 | `model::request` | `Request`, `Method`, `QueryParam`, `PathParam`, `Header`, `Body`, `Part`, `RequestSettings`. |
 | `model::local` | `Request::split()` → (`CommittedRequest`, `RequestLocalValues`) and `CommittedRequest::merge()`. `CommittedRequest` can only be built by `split()`, and it is the only type the file writer accepts (D-033). `LocalValues`: every request's local values by id (`.damnhttp/values.yaml`). |
 | `model::auth` | `Auth`. |
@@ -117,10 +117,29 @@ The spec is [`docs/FORMAT.md`](../FORMAT.md); JSON Schemas are in `schemas/v1/`;
 
 Public API: `write_workspace` / `read_workspace`, `write_collection` / `read_collection`, `write_folder` / `read_folder`, `write_request(&CommittedRequest)` / `read_request -> RequestFile { request, literals }`, `write_environment` / `read_environment -> EnvironmentFile { environment, secret_values_in_file }`, `write_local_values` / `read_local_values` (`.damnhttp/values.yaml`, `LocalValues`), `FORMAT_VERSION`.
 
-- The functions work on text only. Paths, slugs, directories, `.gitignore` and duplicate-id repair are the workspace store's job (`m1-workspace-store`).
+- The functions work on text only. Paths, slugs, directories, `.gitignore` and duplicate-id repair are the workspace store's job.
 - `read_request` goes through `Request::split`, so literals written into a request file by hand come back in `RequestFile::literals`; the store merges them into `values.yaml` and reports them.
 - `write_environment` never writes the value of a secret variable. Until `m2-secrets` adds a type for that split, the value of a secret variable read by hand from a file stays in the `Environment` and its name is reported in `secret_values_in_file`.
 - Reading checks structure only; `validate()` on the model checks the rest, so a file with a semantic problem still opens.
+
+## Workspace store (`core::store`)
+
+`WorkspaceStore` is a workspace on disk. It is synchronous and has no UI or Tauri concerns; the `app` crate will wrap one call per command.
+
+| Module | Contents |
+|---|---|
+| `store` | `WorkspaceStore`: `create`, `open`, `workspace`, `tree`, `create_collection` / `_folder` / `_request`, `read_*` / `save_*`, `rename`, `duplicate`, `move_to`, `delete`, `clean_local_values`, `repair_duplicate_ids`. |
+| `store::tree` | `Tree { collections, problems }`, `TreeNode`, `TreeNodeKind`, `TreeProblem`. |
+| `store::slug` | `slugify`, collision suffixes. |
+| `store::fsutil` | Atomic writes (temporary file + rename, skipped when the content is unchanged), `.gitignore` entry. |
+| `store::error` | `StoreError`. |
+
+Rules it enforces (D-038):
+
+- Items are named by workspace-relative paths with `/`, as returned by `tree()`. A path must stay under `collections/` and use plain components; symbolic links are never followed.
+- `save_request` splits the request: committed part to the request file, local part to `.damnhttp/values.yaml`. `read_request` merges them. Local values are read before anything is written, so a corrupt `values.yaml` stops the save without losing data.
+- A broken file is listed in `Tree::problems` and does not hide the rest of the tree.
+- Environments are not handled yet (`m2-environments`).
 
 ### Path variables and `{{var}}`
 

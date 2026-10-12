@@ -31,6 +31,9 @@ Known risks to check then:
 ## Gotchas
 
 - A Cargo package must not be named `core` (D-001).
+- Every session needs an SSH agent holding both `~/.ssh/github_auth` (push) and `~/.ssh/github_sign` (commit signing). Without it, `git fetch` over SSH fails; reading still works through `gh`.
+- Merged branches are deleted on request (done on 2026-10-12 for everything up to PR #8). Cloud sessions can leave `ccr-*` branches on GitHub; delete them once their PR is merged.
+- `duplicate` in the workspace store does not copy non-YAML files (D-038). Revisit when multipart file attachments get a UI in `m1-request-editor`.
 - `NOTICE` must gain an entry for libgit2 (GPL-2.0 with linking exception) in the PR that adds `git2` (D-004), and for any other bundled third-party code.
 - `CODE_OF_CONDUCT.md` is the Contributor Covenant 2.1 text, unmodified except for the contact sentence. `.gitignore` ignores `.env*`; nothing in this repo should need one.
 - `git2` must be built without its network features so the build never pulls OpenSSL (D-004).
