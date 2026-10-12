@@ -40,4 +40,4 @@ Last updated: 2026-10-12
 
 1. Confirm the PR is merged, then `git switch develop && git pull`.
 2. Next tasks do not depend on each other and can go in either order: `feature/m1-path-variables` (the shared URL parser in `core`, D-028) and `feature/m1-http-engine` (`http` crate). Start with `m1-path-variables`.
-3. Still open for the maintainer (see `NOTES.md`): repo settings (required checks, merge commits only, auto-delete branches); old merged branches on GitHub.
+3. Still open for the maintainer (see `NOTES.md`): repo settings (required checks, merge commits only, auto-delete branches).
