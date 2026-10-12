@@ -26,7 +26,11 @@ my-workspace/
 
 - A workspace holds one or more collections. A collection or folder is a directory with a `collection.yaml` or `folder.yaml`; every other `.yaml` file in it is a request. Folders nest.
 - Environments are shared by every collection in the workspace.
-- File and directory names are a slug of the item's `name` (`Get pet by ID` → `get-pet-by-id.yaml`), with a numeric suffix on a collision. The name shown in the app is always the `name` key, never the file name.
+- File and directory names are a slug of the item's `name` (`Get pet by ID` → `get-pet-by-id.yaml`). The name shown in the app is always the `name` key, never the file name.
+  - A slug is lower-case ASCII letters and digits with words joined by `-`, at most 60 characters. Common accented Latin letters become their base letter (`Città` → `citta`); every other character separates words. A name with no usable character becomes `untitled`.
+  - On a collision the slug gets a numeric suffix (`pets-2`). Names are compared without case and across files and directories, so a workspace behaves the same on every operating system.
+  - Names that are reserved on Windows (`con`, `nul`, ...) and the names `collection` and `folder` get the suffix `-item`.
+  - The app never follows symbolic links inside a workspace, and ignores files and directories whose name starts with a dot.
 - `.damnhttp/` holds local state only: values that must not be committed, secrets, history, UI state. The app keeps `/.damnhttp/` in `.gitignore`.
 
 ## General rules
@@ -81,6 +85,8 @@ If two files share an id (a file copied by hand), the copy gets a new id: the co
 ### Ordering
 
 Collections, folders and requests carry an `order` key: a short string of `0-9 A-Z a-z` (a fractional index). Siblings sort by `order` in byte order, then by file name. Moving an item rewrites one key in one file, and two people adding items to the same folder never conflict. When the keys of a sibling group grow too long, the app rewrites that group with short keys.
+
+Keys the app generates have an integer part whose first character gives its length (`a0`, `a1`, ..., `az`, `b00`, ...) followed by an optional fraction (`a0V` sorts between `a0` and `a1`). Any other string of `0-9 A-Z a-z` written by hand is still read and sorted. The app rewrites a whole sibling group with fresh keys (`a0`, `a1`, ...) only when it has to place an item and cannot: the neighbours have equal keys, a neighbour's key does not follow this layout, or the new key would be longer than 12 characters.
 
 ### Committed and local values
 
