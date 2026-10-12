@@ -288,7 +288,7 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
 - Alternatives: one schema per kind only (editors would need per-file globs that cannot tell `folder.yaml` from a request); `jsonschema` crate for the test (MIT only, and with all features it pulls Python and Ruby bindings into the `cargo-deny` graph).
 - Consequences: the schemas expect YAML strings for string keys, so an editor flags `value: 8080` although the app accepts it. The `$id` URLs resolve only once the schemas reach `main`.
 
-## D-038: Workspace store behaviour (2026-10-12, proposed)
+## D-038: Workspace store behaviour (2026-10-12, accepted)
 
 - Context: `m1-workspace-store` had to settle details the plan left open.
 - Decision:
@@ -303,3 +303,18 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
   - **Writes are atomic** and skipped when the content is unchanged, so saving without changes does not touch the file.
 - Alternatives: Unicode slugs (file names then differ between macOS and Linux for the same text); deleting local values together with the request (a `git restore` would bring back the request without them).
 - Consequences: `docs/FORMAT.md` describes the slug and order-key rules. The store is synchronous; the `app` crate must call it off the UI thread.
+
+## D-039: URL template parsing details (2026-10-12, proposed)
+
+- Context: D-013 and D-028 define path variables; `m1-path-variables` had to settle the edge cases.
+- Decision:
+  - **Authority:** skipped from `scheme://` or a leading `//` to the next `/`; with no scheme, everything before the first `/` is the authority. This is what makes `localhost:8080/x`, `{{baseUrl}}/x` and `user:secret@host` safe.
+  - **Name end:** a path variable's name ends at the first character that cannot be part of it, so `/files/:name.pdf` contains the variable `name`. (Postman treats the whole segment as the name.)
+  - **Query parameters are kept as typed.** Splitting a pasted URL does not percent-decode, and the URL bar text is rebuilt without encoding, so URL bar → table → URL bar is lossless. How parameters are encoded when sent is decided in `m1-http-engine`.
+  - **Path variable values are always percent-encoded** when substituted (everything but unreserved characters, including `/` and `%`). `{{references}}` inside a value are left for the variable resolver.
+  - **A path variable without a value stays in the URL** as `:name` and is reported, so the UI can warn before sending.
+  - **Rename detection:** editing the URL so that exactly one variable name disappears and one appears moves the value and description to the new name, unless an unused entry already has that name (then that entry's own value comes back).
+  - **Enforcement:** `Request::split` moves any query string out of `url`, so the D-021 guarantee does not depend on callers splitting pasted URLs. Saving through the store drops path variable entries that are no longer in the URL.
+  - **URL bar and disabled rows:** editing the URL bar rewrites the enabled query rows in order and leaves disabled rows where they are.
+- Alternatives: decoding query values on paste (`+` and `%2B` then become ambiguous on the way back); a TypeScript copy of the parser for instant highlighting (rejected in D-028).
+- Consequences: `m2-variable-engine` must percent-encode the value of a reference that sits inside a path variable value. Offsets from `analyze` are bytes; the `url_analyze` command converts them to UTF-16 for the webview.

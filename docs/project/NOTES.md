@@ -31,6 +31,9 @@ Known risks to check then:
 ## Gotchas
 
 - A Cargo package must not be named `core` (D-001).
+- `url::substitute_path_variables` leaves `{{references}}` inside a path variable value untouched. `m2-variable-engine` has to percent-encode what they resolve to (D-039).
+- `m1-http-engine` decides how query parameter names and values are encoded when sent; they are stored exactly as typed (D-039).
+- `url::analyze` returns byte offsets. The `url_analyze` command (`m1-tauri-skeleton` / `m1-request-editor`) must convert them to UTF-16 offsets for JavaScript.
 - Every session needs an SSH agent holding both `~/.ssh/github_auth` (push) and `~/.ssh/github_sign` (commit signing). Without it, `git fetch` over SSH fails; reading still works through `gh`.
 - Merged branches are deleted on request (done on 2026-10-12 for everything up to PR #8). Cloud sessions can leave `ccr-*` branches on GitHub; delete them once their PR is merged.
 - `duplicate` in the workspace store does not copy non-YAML files (D-038). Revisit when multipart file attachments get a UI in `m1-request-editor`.
