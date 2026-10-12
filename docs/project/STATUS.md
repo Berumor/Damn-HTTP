@@ -37,7 +37,7 @@ Last updated: 2026-10-12
 
 ## Open PRs
 
-- `feat: add the shared URL template parser` (`feature/m1-path-variables` → `develop`): PR_URL
+- `feat: add the shared URL template parser` (`feature/m1-path-variables` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/10
 
 ## Exact next step
 
