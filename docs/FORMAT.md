@@ -102,9 +102,15 @@ Header values, bodies and form fields are committed as written (D-025). Before "
 
 ### Path variables and `{{variables}}`
 
-- A **path variable** is `:name` where the `:` starts a path segment (it directly follows `/`) in the path part of the URL, and `name` matches `[A-Za-z_][A-Za-z0-9_]*`. Text inside `{{ }}` is skipped. So `localhost:8080`, `http://`, `/a:b`, `?t=:x` and `{{a:b}}` contain no path variable. A literal segment starting with `:` is written percent-encoded (`%3A`).
-- A **variable reference** is `{{name}}` with `name` matching `[A-Za-z0-9_.-]+`. It can appear in the URL, query, headers, body and auth fields.
-- When a request is sent, path variables are substituted into the URL first (their values may contain references and are percent-encoded after interpolation), then references are interpolated. Environment variables override collection variables.
+- A **variable reference** is `{{name}}` with `name` matching `[A-Za-z0-9_.-]+`. It can appear in the URL, query, headers, body and auth fields. Text inside `{{ }}` is never read as anything else.
+- A **path variable** is `:name` directly after a `/` in the path of the URL, with `name` matching `[A-Za-z_][A-Za-z0-9_]*`.
+  - The name ends at the first character that cannot be part of it, so `/files/:name.pdf` has the variable `name`.
+  - The authority is not part of the path: it runs from `scheme://` (or a leading `//`) to the next `/`, or, when the URL has no scheme, from the start to the first `/`. So `localhost:8080/users/:id` and `{{baseUrl}}/users/:id` have one path variable, `id`, and `http://user:secret@host/` has none.
+  - The path ends at the first `?` or `#`.
+  - `localhost:8080`, `http://`, `/a:b`, `/time/12:30`, `?next=/users/:id` and `{{a:b}}` contain no path variable. A literal segment starting with `:` is written percent-encoded (`%3A`).
+- **`url` holds no query string.** Query parameters are in `query`. A URL typed or pasted with `?name=value` is split, and parameter names and values are kept exactly as typed (nothing is percent-decoded). A fragment (`#section`) stays in `url`. If a file edited by hand has a query string in `url`, the app moves it to `query` when it loads the file.
+- **`path_params` is sparse.** It lists a path variable only when it has a `{{reference}}` value or a description; the names always come from `url`. An entry whose name is not in `url` is shown as unused when the file is loaded and removed by the next save.
+- When a request is sent, path variables are substituted into the URL first, then references are interpolated. A path variable's value is data: everything except `A-Z a-z 0-9 - . _ ~` is percent-encoded, including `/` and `%`. A path variable without a value is left in the URL as written. Environment variables override collection variables.
 
 ## Files
 
