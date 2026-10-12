@@ -1,6 +1,6 @@
 # Architecture
 
-State: the Cargo workspace exists. `core` has the data model (`m1-core-model`); `http`, `import` and `git` are empty. The `app` crate and the frontend arrive in `m1-tauri-skeleton`. Sections describing later tasks are the approved plan.
+State: the Cargo workspace exists. `core` has the data model (`m1-core-model`) and the file format (`m1-file-format`); `http`, `import` and `git` are empty. The `app` crate and the frontend arrive in `m1-tauri-skeleton`. Sections describing later tasks are the approved plan.
 
 ## Repository layout (planned)
 
@@ -23,7 +23,7 @@ ui/                     React + TypeScript (strict) sources
   bindings.ts           generated from Rust by tauri-specta; never edited by hand
 docs/                   FORMAT.md, GIT_AUTH.md, RELEASING.md, user guides
 docs/project/           project memory (this directory)
-schemas/                JSON Schemas for the file format
+schemas/v1/             JSON Schemas for the file format, one per kind + file.schema.json
 ```
 
 Directories are named `core`, `http`, ... as in the brief; packages are named `damnhttp-*` because a package called `core` would shadow Rust's built-in `core` crate (D-001).
@@ -74,7 +74,7 @@ Implemented in `crates/core/src/`:
 | `model::id` | `RequestId`, `EnvironmentId`: UUID v4, one accepted spelling. |
 | `model::order` | `OrderKey`: validated fractional-index key. Generating keys is the workspace store's job. |
 | `model::request` | `Request`, `Method`, `QueryParam`, `PathParam`, `Header`, `Body`, `Part`, `RequestSettings`. |
-| `model::local` | `Request::split()` → (`CommittedRequest`, `RequestLocalValues`) and `CommittedRequest::merge()`. `CommittedRequest` can only be built by `split()`, and it is the only type the file writer will accept (D-033). |
+| `model::local` | `Request::split()` → (`CommittedRequest`, `RequestLocalValues`) and `CommittedRequest::merge()`. `CommittedRequest` can only be built by `split()`, and it is the only type the file writer accepts (D-033). `LocalValues`: every request's local values by id (`.damnhttp/values.yaml`). |
 | `model::auth` | `Auth`. |
 | `model::variable` | `Variable`, `Environment`. |
 | `model::collection` | `Workspace`, `Collection`, `Folder`: each item's own settings. The tree is the directory structure and belongs to the workspace store. |
@@ -102,122 +102,25 @@ Differences from the table below, decided while implementing: form bodies use `P
 
 Requests and environments have a stable `id` (UUID v4, generated once), because local state (literal values, secrets) must keep pointing at them when a teammate renames or moves the file (D-022). Folders and collections are identified by path.
 
-## File format (draft v1)
+## File format (`core::format`)
 
-This is the draft to review. The finished spec will be `docs/FORMAT.md` with JSON Schemas in `schemas/` (task `m1-file-format`).
+The spec is [`docs/FORMAT.md`](../FORMAT.md); JSON Schemas are in `schemas/v1/`; canonical examples are in `crates/core/tests/fixtures/format/`. The format is version 1. This section covers the code.
 
-A workspace is a folder, normally a git repository root:
+| Module | Contents |
+|---|---|
+| `format::emit` | The deterministic writer (D-008, D-036): a `Value` tree rendered by one function. Quoting rules, literal blocks, empty collections left out. |
+| `format::tree` | Parses text with `saphyr-parser` (D-034) into `Node`s (scalars keep plain/quoted, entries keep key positions). Rejects anchors, aliases, tags, several documents, duplicate keys, nesting deeper than 32. |
+| `format::read` | `MapReader`: typed, schema-driven access to a mapping; `finish()` rejects unknown keys (D-035). |
+| `format::common` | File header (`id`, `version`, `kind`; version checked before anything else), auth, variables. |
+| `format::request`, `containers`, `environment`, `values` | `write_*` / `read_*` per kind of file. |
+| `format::error` | `FormatError { line, column, kind }`. Messages never contain values. |
 
-```
-my-workspace/
-├── damnhttp.yaml              workspace manifest
-├── .gitignore                 the app adds /.damnhttp/ here
-├── .damnhttp/                 git-ignored, local state only: secrets.yaml, values.yaml, history, UI state, HTTP settings
-├── environments/
-│   ├── dev.yaml
-│   └── staging.yaml
-└── collections/
-    └── petstore/
-        ├── collection.yaml
-        ├── list-pets.yaml
-        └── pets/
-            ├── folder.yaml
-            └── get-pet-by-id.yaml
-```
+Public API: `write_workspace` / `read_workspace`, `write_collection` / `read_collection`, `write_folder` / `read_folder`, `write_request(&CommittedRequest)` / `read_request -> RequestFile { request, literals }`, `write_environment` / `read_environment -> EnvironmentFile { environment, secret_values_in_file }`, `write_local_values` / `read_local_values` (`.damnhttp/values.yaml`, `LocalValues`), `FORMAT_VERSION`.
 
-`damnhttp.yaml`:
-
-```yaml
-version: 1
-kind: workspace
-name: Acme APIs
-```
-
-`collections/petstore/collection.yaml`:
-
-```yaml
-version: 1
-kind: collection
-name: Petstore
-order: a0
-variables:
-  - name: apiVersion
-    value: v2
-auth:
-  type: bearer
-  token: "{{apiToken}}"
-```
-
-`collections/petstore/pets/get-pet-by-id.yaml`:
-
-```yaml
-id: 3f2b8c1e-7a4d-4e9b-9c55-0d6a1b2e4f70
-version: 1
-kind: request
-name: Get pet by ID
-order: a1
-description: Returns a single pet.
-method: GET
-url: "{{baseUrl}}/{{apiVersion}}/pets/:petId"
-query:
-  - name: verbose
-    enabled: false
-  - name: tenant
-    value: "{{tenantId}}"
-headers:
-  - name: Accept
-    value: application/json
-body:
-  type: json
-  content: |
-    {
-      "name": "Rex"
-    }
-settings:
-  timeout_ms: 30000
-```
-
-`environments/staging.yaml`:
-
-```yaml
-id: b81d0c34-5e2f-4a67-8f19-6c3e9a7d2b05
-version: 1
-kind: environment
-name: Staging
-variables:
-  - name: baseUrl
-    value: https://staging.example.com
-  - name: apiToken
-    secret: true
-```
-
-`.damnhttp/values.yaml` (git-ignored) holds what the request file above leaves out:
-
-```yaml
-version: 1
-requests:
-  3f2b8c1e-7a4d-4e9b-9c55-0d6a1b2e4f70:
-    path_params:
-      petId: "42"
-    query:
-      - name: verbose
-        value: "true"
-```
-
-Rules:
-
-- **Determinism.** Keys are written in a fixed order defined per `kind`, never alphabetically or by insertion. Same model in, byte-identical file out. UTF-8, LF, two-space indent, one trailing newline, no BOM. Scalars are plain unless a documented rule requires double quotes; multi-line text uses `|` block scalars. The emitter is our own code over this restricted YAML subset (D-008).
-- **Defaults are omitted.** `enabled: true`, `auth: inherit`, empty lists, empty descriptions and default settings are not written, so files stay short and unrelated edits do not touch them.
-- **No volatile data.** No timestamps, no per-save IDs, no "last modified by".
-- **Ids.** Request and environment files start with an `id` line (UUID v4), written once at creation and never changed. If two files share an id (a hand copy), the copy gets a new one on load. Duplicating in the app creates a new id and copies the local values (D-022).
-- **Names and files.** `name` holds the display name. The file or directory name is a slug of it (`get-pet-by-id.yaml`), with a numeric suffix on collision. Renaming in the app renames the file.
-- **Ordering.** Each item carries a short `order` key (fractional index). Siblings sort by `order`, then by file name. Moving an item rewrites one field in one file; two people adding items to the same folder never conflict. Equal keys are ordered by file name. When keys in a sibling group grow past a length limit, the app renormalizes that group (D-007).
-- **Lists** (`query`, `headers`, `variables`, ...) keep the user's order.
-- **Versioning.** Every file has `version`. The app migrates older versions on write. A file with a newer version than the app supports opens read-only, so an old app never drops fields it does not know (D-009).
-- **Secrets.** A variable with `secret: true` has no `value` key in the committed file. Its value lives in `.damnhttp/secrets.yaml`, keyed by environment `id` + variable name. Only environment variables can be secret (D-019).
-- **Local values (D-021).** For `query` and `path_params`, a request file holds names, `enabled`, order and descriptions. A `value` is written only when, after trimming, it is exactly one `{{name}}` (D-024); anything else, including `{{a}}-1`, is a literal. Literal values go to `.damnhttp/values.yaml`, keyed by request `id`; repeated query names are matched by occurrence. The committed `url` never has a query string: a typed or pasted URL is split on save. A literal value found in a committed file (hand edit) is moved to local values on load and reported by the pre-commit check. `path_params` lists only variables that have a reference value or a description; the names themselves come from `url`. An entry whose name is no longer in the URL is flagged on load and dropped on the next save; a renamed variable keeps its entry and local value (D-028). Header values, bodies and form fields are committed as written (D-025). Literal text typed into the URL path or host is committed too; the app only offers a hint for segments that look like ids (D-026).
-- **`.damnhttp/` holds local state only.** Everything the team shares, including non-secret environments, lives outside it.
-- **Machine-specific HTTP settings** (proxy, custom CA, TLS verification) are local, never in request files (D-020).
+- The functions work on text only. Paths, slugs, directories, `.gitignore` and duplicate-id repair are the workspace store's job (`m1-workspace-store`).
+- `read_request` goes through `Request::split`, so literals written into a request file by hand come back in `RequestFile::literals`; the store merges them into `values.yaml` and reports them.
+- `write_environment` never writes the value of a secret variable. Until `m2-secrets` adds a type for that split, the value of a secret variable read by hand from a file stays in the `Environment` and its name is reported in `secret_values_in_file`.
+- Reading checks structure only; `validate()` on the model checks the rest, so a file with a semantic problem still opens.
 
 ### Path variables and `{{var}}`
 

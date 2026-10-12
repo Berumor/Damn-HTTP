@@ -55,7 +55,8 @@ Promotion PRs are opened by the maintainer. Nothing reaches `main` without havin
 ## Tests
 
 - Rust unit tests live next to the code (`#[cfg(test)]`); cross-module tests in `crates/<name>/tests/`. Fixtures in `crates/<name>/tests/fixtures/`.
-- Serialization: every model type has a round-trip test and a determinism test (serialize twice, compare bytes; parse then serialize, compare with the source file).
+- Serialization: every model type has a round-trip test and a determinism test (serialize twice, compare bytes; parse then serialize, compare with the source file). Canonical example files live in `crates/core/tests/fixtures/format/`; they must stay byte-identical after a read and a write, and must pass the JSON Schemas.
+- A change to the file format updates, in the same PR: the code in `core::format`, the schemas in `schemas/v1/`, `docs/FORMAT.md` (its YAML examples are tested) and the fixtures.
 - Anything that writes a committed file is tested against the D-021 invariant: no literal query or path variable value in the output.
 - Filesystem and git tests use temp dirs and temp repos. No test touches the network; HTTP tests use a local server, git tests use `file://` remotes.
 - Importer fixtures must be redistributable; each fixture directory has a `SOURCE.md` naming origin and license.

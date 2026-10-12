@@ -1,6 +1,6 @@
 # Decisions
 
-ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or approved by the maintainer), `proposed` (made by an agent, awaiting review in the PR that introduced it) or `superseded by D-nnn`. D-001 to D-018 were approved by the merge of PR #1, with the changes the maintainer made in that PR's comment (D-019 to D-021). D-022 and D-024 to D-029 come from the maintainer's answers in PR #2. Never delete an entry; supersede it with a new one.
+ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or approved by the maintainer), `proposed` (made by an agent, awaiting review in the PR that introduced it) or `superseded by D-nnn`. D-001 to D-018 were approved by the merge of PR #1, with the changes the maintainer made in that PR's comment (D-019 to D-021). D-022 and D-024 to D-029 come from the maintainer's answers in PR #2. D-034 to D-037 are agent proposals awaiting review in the `m1-file-format` PR. Never delete an entry; supersede it with a new one.
 
 ## Decisions made in the brief (2026-10-09, accepted)
 
@@ -246,10 +246,44 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
 - Alternatives: commitlint (needs Node tooling in the repo before the frontend exists); running Rust tests on all three OSes on every PR (slow; revisit when platform-specific code such as git process handling arrives in M3).
 - Consequences: the sign-off must carry the commit author's email, so commits authored by bots (e.g. Dependabot) would fail until an exemption is added.
 
-## D-033: The committed / local split is enforced by a type (2026-10-09, proposed)
+## D-033: The committed / local split is enforced by a type (2026-10-09, accepted)
 
 - Context: D-021 says a literal query or path variable value must never reach a committed file by accident.
 - Decision: the editor works on `Request`, which holds every value. `Request::split()` returns a `CommittedRequest` and the `RequestLocalValues`. `CommittedRequest` has no other constructor, and the file writer (`m1-file-format`) will accept only that type. The file loader also goes through `split()`, so a literal in a hand-edited file is moved to local values on load. `CommittedRequest::merge()` puts local values back; where the committed file holds a reference, the reference wins over a stale local value.
 - Details: repeated query names are matched by occurrence index among parameters of the same name. An empty value is stored nowhere. References are rewritten to the canonical `{{name}}`.
 - Alternatives: one `Request` type and a check in the serializer (a forgotten check leaks a value; a type cannot be forgotten).
-- Consequences: the model has no `serde` derives yet. They are added in `m1-file-format` / `m1-tauri-skeleton`, and `CommittedRequest` must not gain a public constructor or a `Deserialize` impl that bypasses `split()`. The same pattern will be used for secret environment values in `m2-secrets`.
+- Consequences: the model has no `serde` derives yet (`m1-file-format` did not need them: the format is mapped by hand, D-035). They may be added in `m1-tauri-skeleton`, and `CommittedRequest` must not gain a public constructor or a `Deserialize` impl that bypasses `split()`. The same pattern will be used for secret environment values in `m2-secrets`.
+
+## D-034: `saphyr-parser` reads YAML (2026-10-12, proposed)
+
+- Context: D-008 leaves the choice of the YAML parser to `m1-file-format`. Output is our own emitter; the parser only has to read.
+- Decision: `saphyr-parser` 0.2.1, pinned exactly (`=0.2.1`). It is an event parser (MIT OR Apache-2.0, YAML 1.2, passes the yaml-test-suite, dependencies `arraydeque` and `thiserror` only). We build our own small tree from its events, keeping scalar styles, anchors, tags and positions, which a loaded `Yaml` value would hide.
+- Alternatives: `yaml-rust2` (same lineage; its `encoding` default feature pulls `encoding_rs`, and `deny.toml` checks all features); `saphyr` (adds a loader we do not need); serde-based crates such as `serde-saphyr` (typing by serde instead of by our schema; `serde_yml` is deprecated).
+- Consequences: a 0.x crate, so upgrades are deliberate: bump the pin in its own PR and run the format tests. Its columns are 0-based although documented as 1-based; `format::tree` adds 1.
+
+## D-035: How files are read (2026-10-12, proposed)
+
+- Decision:
+  - Scalars are typed by the key, not by YAML resolution: string keys take the text of any scalar (`value: 8080` is `"8080"`, `name: no` is `"no"`); booleans are only plain `true` / `false`; numbers only plain digits. An empty value, `~` or `null` counts as absent.
+  - Any YAML 1.2 style is accepted on read (flow collections, single quotes, folded blocks, CRLF, BOM, any key order). Anchors, aliases, tags, several documents, complex keys and duplicate keys are errors. Nesting deeper than 32 is an error.
+  - Unknown keys are errors (D-009); `version` is checked before anything else, so a newer file reports `NewerVersion` and not an unknown key.
+  - Reading checks structure only. Semantic problems (empty names, duplicate variables, a file in a URL-encoded body) are left to `validate()`, so the file still opens and the UI can show the problem.
+  - Errors carry line and column and name keys, never values.
+- Alternatives: YAML's own typing (the "Norway problem": `no` becomes `false`); refusing non-canonical styles (hostile to hand edits).
+- Consequences: a hand-written file may differ from the canonical form; the next save rewrites it canonically.
+
+## D-036: Writer details (2026-10-12, proposed)
+
+- Decision:
+  - A string is written plain only when no YAML 1.1 or 1.2 reader could read it as anything else; the rule is deliberately conservative (anything starting with a digit, `+` or `.` is quoted, except a UUID). Otherwise double-quoted, with control and invisible characters escaped. Multi-line text uses `|`, `|-` or `|+` (with an indentation indicator when the first line starts with a space); text with `\r` or characters needing escapes is double-quoted instead.
+  - Empty lists and maps are never written. `method` and `url` are always written on requests (`url: ""` when empty).
+  - Form bodies use one `fields` list for both kinds; a field has `value` or `file`.
+  - Collection `auth` is left out when `none` (its default); folder and request `auth` when `inherit`.
+  - `.damnhttp/values.yaml` also has `kind: values`, so every file the app writes identifies itself.
+- Consequences: these choices are now the v1 format (expensive to change once teams have files).
+
+## D-037: JSON Schemas (2026-10-12, proposed)
+
+- Decision: one schema per kind in `schemas/v1/`, a `common.schema.json` for shared definitions, and `file.schema.json` that selects the schema by `kind`, so an editor needs one glob. Draft 2020-12. `$id`s point at `raw.githubusercontent.com/Berumor/Damn-HTTP/main/schemas/v1/`. The schemas flag literal query / path values and secret values, which the app would move out of the file. A test validates the fixtures, the writer's output and known-bad files with `boon` (dev-dependency only).
+- Alternatives: one schema per kind only (editors would need per-file globs that cannot tell `folder.yaml` from a request); `jsonschema` crate for the test (MIT only, and with all features it pulls Python and Ruby bindings into the `cargo-deny` graph).
+- Consequences: the schemas expect YAML strings for string keys, so an editor flags `value: 8080` although the app accepts it. The `$id` URLs resolve only once the schemas reach `main`.
