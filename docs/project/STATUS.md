@@ -34,7 +34,7 @@ Last updated: 2026-10-12
 
 ## Open PRs
 
-- `feat: add the workspace store` (`feature/m1-workspace-store` → `develop`): PR_URL
+- `feat: add the workspace store` (`feature/m1-workspace-store` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/9
 
 ## Exact next step
 
