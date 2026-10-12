@@ -1,0 +1,11 @@
+version: 1
+kind: folder
+name: Pets
+order: a1
+description: |-
+  Everything about pets.
+  Requests here use basic auth.
+auth:
+  type: basic
+  username: "{{user}}"
+  password: "{{password}}"

@@ -36,4 +36,6 @@ Known risks to check then:
 - `git2` must be built without its network features so the build never pulls OpenSSL (D-004).
 - CI exists from `m0-ci` on. PRs #1 to #5 were merged or opened without checks.
 - `cargo-deny` is installed in `~/.cargo/bin`, which is not on the default `PATH` on this machine. Run it as `~/.cargo/bin/cargo-deny check` or add that directory to `PATH`.
+- `saphyr-parser` reports 0-based columns although its docs say 1-based; `format::tree` adds 1. It also has its own recursion limit, which fires before ours on very deep flow nesting (D-034).
+- The JSON Schema `$id` URLs point at `main`, so they resolve only after the first release that contains `schemas/` (D-037). Until then, point editors at the local files.
 - Commits are SSH-signed with a passphrase-protected key. If `git commit` fails with an `ssh_askpass` error, the maintainer has to load `~/.ssh/github_sign` into the agent from a real terminal. Do not bypass signing.

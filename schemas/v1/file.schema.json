@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Berumor/Damn-HTTP/main/schemas/v1/file.schema.json",
+  "title": "Any Damn HTTP file, chosen by its kind",
+  "type": "object",
+  "required": ["kind"],
+  "properties": {
+    "kind": { "enum": ["workspace", "collection", "folder", "request", "environment", "values"] }
+  },
+  "allOf": [
+    { "if": { "properties": { "kind": { "const": "workspace" } } }, "then": { "$ref": "workspace.schema.json" } },
+    { "if": { "properties": { "kind": { "const": "collection" } } }, "then": { "$ref": "collection.schema.json" } },
+    { "if": { "properties": { "kind": { "const": "folder" } } }, "then": { "$ref": "folder.schema.json" } },
+    { "if": { "properties": { "kind": { "const": "request" } } }, "then": { "$ref": "request.schema.json" } },
+    { "if": { "properties": { "kind": { "const": "environment" } } }, "then": { "$ref": "environment.schema.json" } },
+    { "if": { "properties": { "kind": { "const": "values" } } }, "then": { "$ref": "values.schema.json" } }
+  ]
+}

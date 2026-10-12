@@ -13,7 +13,7 @@ mod variable;
 pub use auth::Auth;
 pub use collection::{Collection, Folder, Workspace};
 pub use id::{EnvironmentId, IdParseError, RequestId};
-pub use local::{CommittedRequest, LocalQueryValue, RequestLocalValues};
+pub use local::{CommittedRequest, LocalQueryValue, LocalValues, RequestLocalValues};
 pub use order::{OrderKey, OrderKeyError};
 pub use request::{
     Body, Header, Method, Part, PartValue, PathParam, QueryParam, Request, RequestSettings,

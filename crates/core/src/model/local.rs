@@ -10,6 +10,7 @@
 
 use std::collections::{BTreeMap, HashMap};
 
+use super::id::RequestId;
 use super::request::{PathParam, Request};
 use crate::reference::{canonical_reference, reference_name};
 
@@ -38,6 +39,13 @@ impl RequestLocalValues {
     pub fn is_empty(&self) -> bool {
         self.path_params.is_empty() && self.query.is_empty() && !self.skip_tls_verify
     }
+}
+
+/// The local values of every request in a workspace, keyed by request id.
+/// Stored in `.damnhttp/values.yaml`, which is never committed.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct LocalValues {
+    pub requests: BTreeMap<RequestId, RequestLocalValues>,
 }
 
 /// A request holding only what may be written to a committed file.

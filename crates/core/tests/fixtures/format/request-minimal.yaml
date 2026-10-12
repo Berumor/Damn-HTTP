@@ -1,0 +1,7 @@
+id: 0b6f3d2a-9c1e-4f5a-8b7d-2e4c6a8f0d13
+version: 1
+kind: request
+name: Health check
+order: a0
+method: GET
+url: "{{baseUrl}}/health"

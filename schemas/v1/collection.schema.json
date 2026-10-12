@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Berumor/Damn-HTTP/main/schemas/v1/collection.schema.json",
+  "title": "Damn HTTP collection (collection.yaml)",
+  "type": "object",
+  "properties": {
+    "version": { "$ref": "common.schema.json#/$defs/version" },
+    "kind": { "const": "collection" },
+    "name": { "$ref": "common.schema.json#/$defs/name" },
+    "order": { "$ref": "common.schema.json#/$defs/order" },
+    "description": { "$ref": "common.schema.json#/$defs/description" },
+    "variables": {
+      "description": "Collection variables are committed with their values and cannot be secret.",
+      "type": "array",
+      "items": {
+        "allOf": [{ "$ref": "common.schema.json#/$defs/variable" }],
+        "not": { "properties": { "secret": { "const": true } }, "required": ["secret"] }
+      }
+    },
+    "auth": {
+      "description": "Default auth for everything in the collection. Absent means none.",
+      "$ref": "common.schema.json#/$defs/auth"
+    }
+  },
+  "required": ["version", "kind", "name", "order"],
+  "additionalProperties": false
+}

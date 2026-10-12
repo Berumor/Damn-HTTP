@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Berumor/Damn-HTTP/main/schemas/v1/workspace.schema.json",
+  "title": "Damn HTTP workspace manifest (damnhttp.yaml)",
+  "type": "object",
+  "properties": {
+    "version": { "$ref": "common.schema.json#/$defs/version" },
+    "kind": { "const": "workspace" },
+    "name": { "$ref": "common.schema.json#/$defs/name" }
+  },
+  "required": ["version", "kind", "name"],
+  "additionalProperties": false
+}

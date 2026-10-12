@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Berumor/Damn-HTTP/main/schemas/v1/folder.schema.json",
+  "title": "Damn HTTP folder (folder.yaml)",
+  "type": "object",
+  "properties": {
+    "version": { "$ref": "common.schema.json#/$defs/version" },
+    "kind": { "const": "folder" },
+    "name": { "$ref": "common.schema.json#/$defs/name" },
+    "order": { "$ref": "common.schema.json#/$defs/order" },
+    "description": { "$ref": "common.schema.json#/$defs/description" },
+    "auth": {
+      "description": "Absent means inherit from the parent.",
+      "$ref": "common.schema.json#/$defs/auth"
+    }
+  },
+  "required": ["version", "kind", "name", "order"],
+  "additionalProperties": false
+}

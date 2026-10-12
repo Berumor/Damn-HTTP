@@ -1,0 +1,13 @@
+id: c7e1a3f5-8b2d-4c6e-9a0f-1d3b5e7f9a2c
+version: 1
+kind: request
+name: Send report
+order: d
+method: PROPFIND
+url: https://example.com/reports
+body:
+  type: text
+  content: |2-
+      indented first line
+    second line
+  content_type: text/csv

@@ -1,0 +1,21 @@
+id: 6a1c9e4b-2d7f-4b8a-9e3c-5f0a7d2b8c61
+version: 1
+kind: request
+name: Log in
+order: b
+method: POST
+url: "{{baseUrl}}/login"
+auth:
+  type: bearer
+  token: "{{loginToken}}"
+body:
+  type: form-urlencoded
+  fields:
+    - name: username
+      value: "{{user}}"
+    - name: remember
+      value: "true"
+    - name: debug
+      value: "1"
+      enabled: false
+    - name: empty

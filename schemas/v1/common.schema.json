@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Berumor/Damn-HTTP/main/schemas/v1/common.schema.json",
+  "title": "Damn HTTP file format v1: shared definitions",
+  "$defs": {
+    "version": {
+      "description": "Format version of this file. A file with a newer version than the app supports is refused.",
+      "const": 1
+    },
+    "id": {
+      "description": "UUID v4, lowercase and hyphenated. Written once when the item is created, never changed.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "name": {
+      "description": "Display name.",
+      "type": "string"
+    },
+    "order": {
+      "description": "Fractional-index key. Siblings sort by this key (byte order), then by file name.",
+      "type": "string",
+      "pattern": "^[0-9A-Za-z]+$"
+    },
+    "description": {
+      "type": "string"
+    },
+    "reference": {
+      "description": "Exactly one {{name}} variable reference. Literal values are stored locally, never in this file.",
+      "type": "string",
+      "pattern": "^\\s*\\{\\{\\s*[A-Za-z0-9_.-]+\\s*\\}\\}\\s*$"
+    },
+    "variableName": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "variables": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/variable" }
+    },
+    "variable": {
+      "type": "object",
+      "properties": {
+        "name": { "$ref": "#/$defs/variableName" },
+        "value": { "type": "string" },
+        "secret": {
+          "description": "Only environment variables can be secret. The value of a secret variable is stored locally and never written here.",
+          "type": "boolean"
+        },
+        "description": { "$ref": "#/$defs/description" }
+      },
+      "required": ["name"],
+      "additionalProperties": false,
+      "if": {
+        "properties": { "secret": { "const": true } },
+        "required": ["secret"]
+      },
+      "then": { "not": { "required": ["value"] } }
+    },
+    "auth": {
+      "type": "object",
+      "properties": {
+        "type": { "enum": ["inherit", "none", "basic", "bearer"] }
+      },
+      "required": ["type"],
+      "oneOf": [
+        {
+          "properties": { "type": { "enum": ["inherit", "none"] } },
+          "propertyNames": { "enum": ["type"] }
+        },
+        {
+          "properties": {
+            "type": { "const": "basic" },
+            "username": { "type": "string" },
+            "password": { "type": "string" }
+          },
+          "propertyNames": { "enum": ["type", "username", "password"] }
+        },
+        {
+          "properties": {
+            "type": { "const": "bearer" },
+            "token": { "type": "string" }
+          },
+          "propertyNames": { "enum": ["type", "token"] }
+        }
+      ]
+    }
+  }
+}

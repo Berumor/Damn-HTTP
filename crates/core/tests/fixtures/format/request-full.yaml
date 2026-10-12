@@ -1,0 +1,44 @@
+id: 3f2b8c1e-7a4d-4e9b-9c55-0d6a1b2e4f70
+version: 1
+kind: request
+name: Update pet
+order: a1V
+description: |
+  Updates a pet.
+
+  The `petId` is the id returned by "Create pet".
+method: PUT
+url: "{{baseUrl}}/{{apiVersion}}/stores/:storeId/pets/:petId"
+path_params:
+  - name: storeId
+    value: "{{storeId}}"
+  - name: petId
+    description: The pet to update.
+query:
+  - name: verbose
+    enabled: false
+  - name: tenant
+    value: "{{tenantId}}"
+    description: Required by the multi-tenant gateway.
+  - name: tag
+  - name: tag
+headers:
+  - name: Accept
+    value: application/json
+  - name: X-Request-Source
+    value: "damnhttp: manual test"
+    enabled: false
+  - name: X-Empty
+auth:
+  type: none
+body:
+  type: json
+  content: |
+    {
+      "name": "Rex",
+      "tags": ["dog", "good"]
+    }
+settings:
+  follow_redirects: false
+  max_redirects: 5
+  timeout_ms: 30000

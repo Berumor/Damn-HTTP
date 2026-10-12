@@ -18,8 +18,8 @@ Legend: `[ ]` todo, `[~]` in progress or PR open, `[x]` merged.
 
 ## M1: model, file format, request editor, send, response viewer
 
-- [~] `m1-core-model`: data model and validation in `core`, including the committed / local split of query and path variable values (D-021) request ids as UUIDs (D-022) and the reference rule (D-024).
-- [ ] `m1-file-format`: deterministic YAML emitter + parser, round-trip and determinism tests, a test that no literal query / path value can be serialized into a request file, JSON Schemas in `schemas/`, first `docs/FORMAT.md`.
+- [x] `m1-core-model`: data model and validation in `core`, including the committed / local split of query and path variable values (D-021) request ids as UUIDs (D-022) and the reference rule (D-024). Merged (PR #7).
+- [~] `m1-file-format`: deterministic YAML emitter + parser, round-trip and determinism tests, a test that no literal query / path value can be serialized into a request file, JSON Schemas in `schemas/`, first `docs/FORMAT.md`. PR #8 open (D-034 to D-037).
 - [ ] `m1-workspace-store`: on-disk operations in `core`: create/open, tree, CRUD, rename, duplicate, move, ordering, slug collisions, `.gitignore` management, the local values store in `.damnhttp/`, duplicate-id repair on load, "clear unused local data". Tests on temp dirs.
 - [ ] `m1-path-variables`: the single shared URL parser in `core` (D-028), including the check that a committed `url` has no query string: path variable names, `{{ }}` skipping, query split, `:id` substitution, rename detection, sparse `path_params` handling. Tests for schemes, ports and the other edge cases.
 - [ ] `m1-http-engine`: `http` crate: reqwest + rustls, redirects, timeouts, proxy, custom CA, skip TLS verification, timing, sizes, cancellation, body to temp file. Tests against a local server.
