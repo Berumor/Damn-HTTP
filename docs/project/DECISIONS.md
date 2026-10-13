@@ -304,7 +304,7 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
 - Alternatives: Unicode slugs (file names then differ between macOS and Linux for the same text); deleting local values together with the request (a `git restore` would bring back the request without them).
 - Consequences: `docs/FORMAT.md` describes the slug and order-key rules. The store is synchronous; the `app` crate must call it off the UI thread.
 
-## D-039: URL template parsing details (2026-10-12, proposed)
+## D-039: URL template parsing details (2026-10-12, accepted, except "Name end", superseded by D-040)
 
 - Context: D-013 and D-028 define path variables; `m1-path-variables` had to settle the edge cases.
 - Decision:
@@ -318,3 +318,10 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
   - **URL bar and disabled rows:** editing the URL bar rewrites the enabled query rows in order and leaves disabled rows where they are.
 - Alternatives: decoding query values on paste (`+` and `%2B` then become ambiguous on the way back); a TypeScript copy of the parser for instant highlighting (rejected in D-028).
 - Consequences: `m2-variable-engine` must percent-encode the value of a reference that sits inside a path variable value. Offsets from `analyze` are bytes; the `url_analyze` command converts them to UTF-16 for the webview.
+
+## D-040: A path variable is a whole segment, as in Postman (2026-10-13, accepted)
+
+- Context: D-039 proposed that a name ends at the first character that cannot be part of it (`/files/:name.pdf` → `name`). The maintainer answered in PR #10: "Treat like Postman". The other three points of D-039 (query parameters kept as typed, path values always percent-encoded, a variable without a value left as `:name`) were confirmed there.
+- Decision: a path variable is a whole path segment of the form `:name`; the name runs to the next `/` or the end of the path. `/files/:name.pdf` has the variable `name.pdf`. To make that possible the name grammar is widened from `[A-Za-z_][A-Za-z0-9_]*` (D-013, D-028) to `[A-Za-z_][A-Za-z0-9_.-]*`. A segment that starts with `:` but is not such a name, including one that contains a `{{reference}}`, is ordinary text.
+- Alternatives: keep the strict grammar and treat `/:name.pdf` as plain text (the user's variable would silently not exist); allow any character in the name as Postman does (names then need escaping in files and in the UI).
+- Consequences: importers can keep Postman path variable names with dots and dashes unchanged; other names (spaces, non-ASCII) have to be converted and reported. `schemas/v1/request.schema.json` and `docs/FORMAT.md` use the new grammar. No format version bump: no release has shipped the old rule.

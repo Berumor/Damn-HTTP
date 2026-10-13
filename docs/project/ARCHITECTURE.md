@@ -157,7 +157,7 @@ The `url_analyze` command must convert the byte offsets to UTF-16 offsets for th
 
 ### Path variables and `{{var}}`
 
-- A path variable is `:name` where the `:` starts a path segment (it directly follows `/`), the segment is in the path part of the URL (before `?` and `#`, not in the authority), and `name` matches `[A-Za-z_][A-Za-z0-9_]*`. Text inside `{{ }}` is skipped. So `localhost:8080`, `http://`, `/a:b`, `?t=:x` and `{{a:b}}` contain none. One parser in `core` implements this for the file loader and, through `url_analyze`, for the UI (D-028).
+- A path variable is a whole path segment `:name` (as in Postman, D-040) in the path part of the URL (before `?` and `#`, not in the authority), with `name` matching `[A-Za-z_][A-Za-z0-9_.-]*`. So `/files/:name.pdf` has the variable `name.pdf`. Text inside `{{ }}` is skipped, and a segment containing a reference is not a variable. `localhost:8080`, `http://`, `/a:b`, `?t=:x`, `/:id{{x}}` and `{{a:b}}` contain none. One parser in `core` implements this for the file loader and, through `url_analyze`, for the UI (D-028).
 - `{{name}}` is a variable reference anywhere in URL, query, headers, body and auth fields. `name` matches `[A-Za-z0-9_.-]+`; spaces inside the braces are allowed and ignored.
 - Resolution order: path variables are substituted into the URL template first (their values may contain `{{var}}` and are percent-encoded after interpolation), then `{{var}}` is interpolated. A variable's value may reference other variables; cycles are reported, not followed.
 - Precedence: environment variables override collection variables (D-014). Unresolved references are left as written and reported to the UI.
