@@ -95,6 +95,8 @@ Everything except the smoke test works today. On Linux the Tauri system librarie
 | PR title | PR | the title is a Conventional Commit |
 | Commits | PR | every non-merge commit is a Conventional Commit and signed off by its author (`.github/scripts/check-commits.sh`) |
 
+`.github/workflows/packaging.yml` ("Packaging check") builds the installers without publishing them: Linux AppImage on `ubuntu-22.04`, macOS `.dmg` for Apple Silicon and Intel, Windows NSIS `.exe`. It runs on pull requests to `develop` that touch `crates/`, `ui/` or build configuration, and can be started by hand from the Actions tab. The installers are kept as workflow artifacts for 3 days. It is slow (about 6 minutes per platform with a warm cache), so it is not a required check.
+
 - Third-party actions are pinned to a commit SHA with the version in a comment. Update the SHA and the comment together.
 - The allowed commit types are listed twice, in `ci.yml` and in `check-commits.sh`. Keep them in sync.
 - A `git revert` commit must be reworded to `revert: ...` to pass the commit check.

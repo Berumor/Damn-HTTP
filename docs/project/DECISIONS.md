@@ -372,3 +372,10 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
   - **Kept, because it is architecture and not style:** the rule that forbids importing `invoke` directly, so the frontend can only call Rust through the generated typed commands (brief requirement). `tsconfig.json` stays strict, also a brief requirement.
 - Alternatives: the stricter type-checked ESLint sets from D-042 (more findings, more configuration to understand).
 - Consequences: do not add rule overrides or formatter options without asking the maintainer.
+
+## D-044: Packaging check workflow (2026-10-13, proposed)
+
+- Context: `m1-packaging-check`; the brief wants a build-only packaging check on Linux, macOS and Windows in M1, and the same matrix build-only on pull requests later (M7).
+- Decision: one workflow, `packaging.yml`, with a four-target matrix (Linux AppImage on `ubuntu-22.04`, macOS arm64 and x86_64 `.dmg`, Windows NSIS). It runs `pnpm tauri build` directly, uploads the installers as artifacts for 3 days and publishes nothing. Triggers: pull requests to `develop` that touch app code or build configuration, and manual runs. Both macOS targets build on the Apple Silicon runner; Intel is cross-compiled.
+- Alternatives: `tauri-apps/tauri-action` now (it is planned for the release workflow in M7, where it also creates the release; for a plain build the CLI is the same thing with one fewer third-party action); a nightly schedule (wasteful while the repository is quiet; the path filter already covers every change that can break packaging).
+- Consequences: not a required check, because it does not run on documentation-only pull requests and takes several minutes. M7 turns this matrix into the release workflow.
