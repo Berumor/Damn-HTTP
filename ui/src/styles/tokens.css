@@ -1,0 +1,44 @@
+/*
+ * Design tokens. Components use these variables and never hard-code a
+ * colour or a spacing value. The theme is chosen by data-theme on <html>,
+ * set by lib/theme.ts.
+ */
+:root {
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius: 6px;
+  --text-sm: 12px;
+  --text-md: 14px;
+  --text-lg: 18px;
+
+  color-scheme: light;
+  --color-bg: #ffffff;
+  --color-surface: #f4f5f7;
+  --color-border: #d8dbe2;
+  --color-text: #1b1e27;
+  --color-text-muted: #5b6272;
+  --color-accent: #8a5a00;
+  --color-accent-contrast: #ffffff;
+  --color-focus: #1f6feb;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #181b26;
+  --color-surface: #212534;
+  --color-border: #343a4d;
+  --color-text: #e6e8ee;
+  --color-text-muted: #9aa1b2;
+  --color-accent: #ffc400;
+  --color-accent-contrast: #181b26;
+  --color-focus: #6ea8ff;
+}
