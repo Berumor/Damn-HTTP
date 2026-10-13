@@ -35,7 +35,7 @@ Last updated: 2026-10-13
 
 ## Open PRs
 
-- `fix: treat a whole path segment as the path variable name` (`fix/path-variable-segment-names` → `develop`): PR_URL
+- `fix: treat a whole path segment as the path variable name` (`fix/path-variable-segment-names` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/11
 
 ## Exact next step
 
