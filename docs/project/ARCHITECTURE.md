@@ -1,6 +1,6 @@
 # Architecture
 
-State: the Cargo workspace exists. `core` has the data model (`m1-core-model`), the file format (`m1-file-format`) and the workspace store (`m1-workspace-store`); `http`, `import` and `git` are empty. The `app` crate and the frontend arrive in `m1-tauri-skeleton`. Sections describing later tasks are the approved plan.
+State: the Cargo workspace exists. `core` has the data model (`m1-core-model`), the file format (`m1-file-format`), the workspace store (`m1-workspace-store`) and the URL parser (`m1-path-variables`); `http`, `import` and `git` are empty. The `app` crate and the frontend arrive in `m1-tauri-skeleton`. Sections describing later tasks are the approved plan.
 
 ## Repository layout (planned)
 
@@ -140,6 +140,20 @@ Rules it enforces (D-038):
 - `save_request` splits the request: committed part to the request file, local part to `.damnhttp/values.yaml`. `read_request` merges them. Local values are read before anything is written, so a corrupt `values.yaml` stops the save without losing data.
 - A broken file is listed in `Tree::problems` and does not hide the rest of the tree.
 - Environments are not handled yet (`m2-environments`).
+
+## URL templates (`core::url`)
+
+The one parser for what the user types in the URL bar (D-028, D-039). The file loader, the model and, through the `url_analyze` command, the UI all use it.
+
+| Function | Purpose |
+|---|---|
+| `url::analyze` | Path variable spans, `{{reference}}` spans (with validity), query and fragment ranges. Byte offsets. |
+| `url::split_query` / `join_query` | Take the query string out of a typed URL, and put enabled parameters back for display. Nothing is decoded or encoded. |
+| `url::substitute_path_variables` | Replace `:name` with percent-encoded values; report the ones without a value. |
+
+`model::url_edit` adds the request-level operations: `Request::set_url_bar_text` (split the query, follow the URL with the path variable table, detect a rename), `url_bar_text`, `align_path_params`, `orphan_path_params`, `move_query_out_of_url`. `Request::split` calls `move_query_out_of_url`, and the store aligns path variables on load (keeping orphans) and on save (dropping them).
+
+The `url_analyze` command must convert the byte offsets to UTF-16 offsets for the webview.
 
 ### Path variables and `{{var}}`
 

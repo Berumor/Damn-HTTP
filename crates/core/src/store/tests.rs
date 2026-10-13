@@ -847,3 +847,111 @@ fn every_written_file_is_inside_the_workspace_and_ends_in_yaml() {
     );
     assert_eq!(folder, "collections/escape-attempt/untitled");
 }
+
+// ----- URL, path variables and the store -----
+
+#[test]
+fn reading_lists_every_path_variable_of_the_url_in_order() {
+    let (_dir, store) = workspace();
+    let collection = store.create_collection("Stations").unwrap();
+    let path = store.create_request(&collection, "Find station").unwrap();
+    let mut request = store.read_request(&path).unwrap();
+    request.set_url_bar_text("https://some.service/:country/stations/:id?limit=20");
+    request.path_params[1].value = "42".to_owned();
+    store.save_request(&path, request).unwrap();
+
+    // The file lists no path variables at all: they have no reference
+    // value and no description, and the names are in the URL.
+    let file = read(&store, &path);
+    assert!(!file.contains("path_params"), "{file}");
+    assert!(!file.contains('?') && !file.contains("20"), "{file}");
+
+    let loaded = store.read_request(&path).unwrap();
+    let listed: Vec<(&str, &str)> = loaded
+        .path_params
+        .iter()
+        .map(|p| (p.name.as_str(), p.value.as_str()))
+        .collect();
+    assert_eq!(listed, [("country", ""), ("id", "42")]);
+    assert_eq!(
+        loaded.url_bar_text(),
+        "https://some.service/:country/stations/:id?limit=20"
+    );
+}
+
+#[test]
+fn saving_drops_path_variables_the_url_no_longer_has() {
+    let (_dir, store) = workspace();
+    let collection = store.create_collection("Stations").unwrap();
+    let path = store.create_request(&collection, "Find station").unwrap();
+    let mut request = store.read_request(&path).unwrap();
+    request.set_url_bar_text("/:country/stations/:id");
+    request.path_params[0].value = "it".to_owned();
+    request.path_params[1].value = "{{stationId}}".to_owned();
+    store.save_request(&path, request.clone()).unwrap();
+
+    request.set_url_bar_text("/stations");
+    assert_eq!(request.orphan_path_params(), ["country", "id"]);
+    store.save_request(&path, request).unwrap();
+
+    let file = read(&store, &path);
+    assert!(
+        !file.contains("stationId") && !file.contains("path_params"),
+        "{file}"
+    );
+    assert!(!read(&store, ".damnhttp/values.yaml").contains("country"));
+    assert_eq!(store.read_request(&path).unwrap().path_params, []);
+}
+
+#[test]
+fn a_file_with_orphan_entries_shows_them_until_the_next_save() {
+    let (_dir, store) = workspace();
+    let collection = store.create_collection("Stations").unwrap();
+    let path = format!("{collection}/by-hand.yaml");
+    write(
+        &store,
+        &path,
+        &format!(
+            "id: {ID_A}\nversion: 1\nkind: request\nname: By hand\norder: a0\nmethod: GET\nurl: /stations/:id\npath_params:\n  - name: gone\n    value: \"{{{{old}}}}\"\n"
+        ),
+    );
+
+    let request = store.read_request(&path).unwrap();
+    let names: Vec<&str> = request
+        .path_params
+        .iter()
+        .map(|p| p.name.as_str())
+        .collect();
+    assert_eq!(names, ["id", "gone"]);
+    assert_eq!(request.orphan_path_params(), ["gone"]);
+
+    store.save_request(&path, request).unwrap();
+    assert!(!read(&store, &path).contains("gone"));
+}
+
+#[test]
+fn a_query_typed_into_the_url_of_a_file_is_moved_to_the_query_table() {
+    let (_dir, store) = workspace();
+    let collection = store.create_collection("Stations").unwrap();
+    let path = format!("{collection}/by-hand.yaml");
+    write(
+        &store,
+        &path,
+        &format!(
+            "id: {ID_A}\nversion: 1\nkind: request\nname: By hand\norder: a0\nmethod: GET\nurl: \"https://some.service/:country/stations/?id=1234\"\n"
+        ),
+    );
+
+    let request = store.read_request(&path).unwrap();
+    assert_eq!(request.url, "https://some.service/:country/stations/");
+    assert_eq!(request.query, [query("id", "1234")]);
+    assert_eq!(request.validate(), []);
+
+    store.save_request(&path, request).unwrap();
+    let file = read(&store, &path);
+    assert!(!file.contains("1234") && !file.contains('?'), "{file}");
+    assert_eq!(
+        store.read_request(&path).unwrap().query,
+        [query("id", "1234")]
+    );
+}

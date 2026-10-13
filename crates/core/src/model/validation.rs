@@ -20,6 +20,8 @@ pub enum ValidationError {
     InvalidPathVariableName(String),
     #[error("the path variable `{0}` is listed more than once")]
     DuplicatePathVariable(String),
+    #[error("the URL contains a query string; query parameters belong in the query table")]
+    QueryInUrl,
     #[error("the form field `{0}` is a file, which only a multipart body can send")]
     FileInUrlencodedBody(String),
 }

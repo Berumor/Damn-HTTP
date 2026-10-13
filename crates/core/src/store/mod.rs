@@ -549,12 +549,19 @@ impl WorkspaceStore {
             values.requests.insert(id, local.clone());
             self.save_values(&values)?;
         }
-        Ok(file.request.merge(&local))
+        let mut request = file.request.merge(&local);
+        // One entry per variable in the URL, in URL order; entries the URL
+        // no longer has stay visible as orphans until the next save (D-028).
+        request.align_path_params(true);
+        Ok(request)
     }
 
     /// Splits a request and writes both parts. No kind or id checks.
-    fn store_request(&self, path: &str, request: Request) -> Result<()> {
+    fn store_request(&self, path: &str, mut request: Request) -> Result<()> {
         let id = request.id;
+        // Saving drops path variable entries the URL no longer has (D-028).
+        request.move_query_out_of_url();
+        request.align_path_params(false);
         let (committed, local) = request.split();
         // Read the local values first: if they are unreadable, nothing is
         // written and the editor still holds what the user typed.
