@@ -38,7 +38,7 @@ Last updated: 2026-10-13
 
 ## Open PRs
 
-- `feat: add workspace and tree commands` (`feature/m1-workspace-commands` → `develop`): PR_URL
+- `feat: add workspace and tree commands` (`feature/m1-workspace-commands` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/16
 
 ## Exact next step
 
