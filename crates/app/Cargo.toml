@@ -17,9 +17,11 @@ tauri-build = { workspace = true }
 [dependencies]
 damnhttp-core = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
 specta = { workspace = true }
 specta-typescript = { workspace = true }
 tauri = { workspace = true }
+tauri-plugin-dialog = { workspace = true }
 tauri-specta = { workspace = true }
 
 [dev-dependencies]

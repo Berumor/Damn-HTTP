@@ -8,9 +8,61 @@ import { invoke as __TAURI_INVOKE } from "@tauri-apps/api/core";
 /** Commands */
 export const commands = {
 	appInfo: () => __TAURI_INVOKE<AppInfo>("app_info"),
+	/**
+	 *  Shows the native folder dialog and returns the chosen folder, or `null`
+	 *  if the user cancelled. Only folders chosen here (or opened before) can
+	 *  be passed to `workspace_create` and `workspace_open`.
+	 */
+	workspacePickFolder: () => typedError<string | null, AppError>(__TAURI_INVOKE("workspace_pick_folder")),
+	workspaceCreate: (folder: string, name: string) => typedError<WorkspaceInfo, AppError>(__TAURI_INVOKE("workspace_create", { folder, name })),
+	workspaceOpen: (folder: string) => typedError<WorkspaceInfo, AppError>(__TAURI_INVOKE("workspace_open", { folder })),
+	workspaceClose: () => typedError<null, AppError>(__TAURI_INVOKE("workspace_close")),
+	/**  The open workspace, or `null`. Lets the window restore itself after a reload. */
+	workspaceCurrent: () => typedError<{
+	name: string,
+	/**  The folder on disk, for display. */
+	path: string,
+} | null, AppError>(__TAURI_INVOKE("workspace_current")),
+	workspaceRecent: () => typedError<RecentWorkspace[], AppError>(__TAURI_INVOKE("workspace_recent")),
+	workspaceTree: () => typedError<TreeDto, AppError>(__TAURI_INVOKE("workspace_tree")),
+	/**  Returns the new collection's path. */
+	collectionCreate: (name: string) => typedError<string, AppError>(__TAURI_INVOKE("collection_create", { name })),
+	/**  Returns the new folder's path. */
+	folderCreate: (parent: string, name: string) => typedError<string, AppError>(__TAURI_INVOKE("folder_create", { parent, name })),
+	/**  Returns the new request's path. */
+	requestCreate: (parent: string, name: string) => typedError<string, AppError>(__TAURI_INVOKE("request_create", { parent, name })),
+	/**  Returns the item's path after the rename, which changes with the name. */
+	nodeRename: (path: string, name: string) => typedError<string, AppError>(__TAURI_INVOKE("node_rename", { path, name })),
+	/**  Returns the copy's path. */
+	nodeDuplicate: (path: string) => typedError<string, AppError>(__TAURI_INVOKE("node_duplicate", { path })),
+	/**
+	 *  Moves an item to `position` among the children of `new_parent` (a
+	 *  collection or folder path; `null` reorders collections). `position`
+	 *  counts the children without the moved item. Returns the new path.
+	 */
+	nodeMove: (path: string, newParent: string | null, position: number) => typedError<string, AppError>(__TAURI_INVOKE("node_move", { path, newParent, position })),
+	nodeDelete: (path: string) => typedError<null, AppError>(__TAURI_INVOKE("node_delete", { path })),
 };
 
 /* Types */
+/**
+ *  An error returned by a command.
+ * 
+ *  `code` is stable and is what the frontend translates. `message` is
+ *  English diagnostic text for logs and the Advanced view. Neither may
+ *  contain secret or local values.
+ */
+export type AppError = {
+	/**  `SCREAMING_SNAKE_CASE`, for example `NOT_A_WORKSPACE`. */
+	code: string,
+	message: string,
+	/**
+	 *  Extra diagnostic text, such as captured git output. Shown only in
+	 *  the Advanced view.
+	 */
+	details: string | null,
+};
+
 /**  Facts about the running app. */
 export type AppInfo = {
 	name: string,
@@ -20,4 +72,54 @@ export type AppInfo = {
 	/**  `linux`, `macos` or `windows`. */
 	platform: string,
 };
+
+export type NodeKind = "collection" | "folder" | "request";
+
+/**  A workspace opened before, for the start screen. */
+export type RecentWorkspace = {
+	name: string,
+	path: string,
+};
+
+/**  The sidebar tree. */
+export type TreeDto = {
+	collections: TreeNodeDto[],
+	/**  Files that could not be read; they are not in `collections`. */
+	problems: TreeProblemDto[],
+};
+
+export type TreeNodeDto = {
+	/**  Workspace-relative path; the handle for every tree command. */
+	path: string,
+	name: string,
+	kind: NodeKind,
+	/**  The HTTP method, for requests only. */
+	method: string | null,
+	/**  The stable id, for requests only. */
+	id: string | null,
+	children: TreeNodeDto[],
+};
+
+export type TreeProblemDto = {
+	path: string,
+	/**  Names keys and positions, never values. */
+	message: string,
+};
+
+/**  The open workspace. */
+export type WorkspaceInfo = {
+	name: string,
+	/**  The folder on disk, for display. */
+	path: string,
+};
+
+/* Tauri Specta runtime */
+async function typedError<T, E>(result: Promise<T>): Promise<{ status: "ok"; data: T } | { status: "error"; error: E }> {
+    try {
+        return { status: "ok", data: await result };
+    } catch (e) {
+        if (e instanceof Error) throw e;
+        return { status: "error", error: e as any };
+    }
+}
 

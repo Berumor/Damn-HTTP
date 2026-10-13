@@ -6,11 +6,17 @@
 //! no filesystem, shell or network access of its own.
 
 mod commands;
+mod dto;
 mod error;
+mod ops;
+mod state;
 
 pub use error::AppError;
 
+use tauri::Manager;
 use tauri_specta::{Builder, collect_commands};
+
+use state::AppState;
 
 /// Where the generated TypeScript bindings live, relative to this crate.
 #[cfg(test)]
@@ -19,7 +25,23 @@ const BINDINGS_PATH: &str = "../../ui/src/bindings.ts";
 /// Every command and type the frontend can use. A command also has to be
 /// listed in `build.rs` and granted in `capabilities/default.json`.
 fn bindings() -> Builder<tauri::Wry> {
-    Builder::<tauri::Wry>::new().commands(collect_commands![commands::app_info])
+    Builder::<tauri::Wry>::new().commands(collect_commands![
+        commands::app_info,
+        commands::workspace_pick_folder,
+        commands::workspace_create,
+        commands::workspace_open,
+        commands::workspace_close,
+        commands::workspace_current,
+        commands::workspace_recent,
+        commands::workspace_tree,
+        commands::collection_create,
+        commands::folder_create,
+        commands::request_create,
+        commands::node_rename,
+        commands::node_duplicate,
+        commands::node_move,
+        commands::node_delete,
+    ])
 }
 
 #[cfg(test)]
@@ -32,9 +54,13 @@ fn typescript() -> specta_typescript::Typescript {
 pub fn run() {
     let bindings = bindings();
     let result = tauri::Builder::default()
+        // Used from Rust only (the folder picker). The window's capability
+        // grants none of the plugin's own commands.
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(bindings.invoke_handler())
         .setup(move |app| {
             bindings.mount_events(app);
+            app.manage(AppState::new(app.path().app_config_dir()?));
             Ok(())
         })
         .run(tauri::generate_context!());
@@ -95,6 +121,11 @@ mod tests {
             );
         }
         // Nothing but the app's own commands is granted.
-        assert!(!capability.contains("core:") && !capability.contains("fs:"));
+        for forbidden in ["core:", "fs:", "dialog:", "shell:", "http:"] {
+            assert!(
+                !capability.contains(forbidden),
+                "{forbidden} must not be granted"
+            );
+        }
     }
 }

@@ -6,7 +6,23 @@
 //! (`capabilities/default.json`). A command missing from this list cannot be
 //! called at all.
 
-const COMMANDS: &[&str] = &["app_info"];
+const COMMANDS: &[&str] = &[
+    "app_info",
+    "workspace_pick_folder",
+    "workspace_create",
+    "workspace_open",
+    "workspace_close",
+    "workspace_current",
+    "workspace_recent",
+    "workspace_tree",
+    "collection_create",
+    "folder_create",
+    "request_create",
+    "node_rename",
+    "node_duplicate",
+    "node_move",
+    "node_delete",
+];
 
 fn main() {
     let attributes = tauri_build::Attributes::new()

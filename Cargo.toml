@@ -37,6 +37,9 @@ url = "2.5.8"
 tauri = { version = "2.12.3", features = [] }
 tauri-build = { version = "2", features = [] }
 serde = { version = "1.0.229", features = ["derive"] }
+# Native folder picker, opened from Rust only: the webview is not granted
+# any of the plugin's own commands.
+tauri-plugin-dialog = "2"
 specta = "=2.0.0-rc.25"
 specta-typescript = "=0.0.12"
 tauri-specta = { version = "=2.0.0-rc.25", features = ["derive", "typescript"] }
