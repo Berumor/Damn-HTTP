@@ -5,15 +5,16 @@ Last updated: 2026-10-13
 ## Current
 
 - Milestone: **M1** (model, file format, request editor, send, response viewer)
-- Task: `path-variable-segment-names`, branch `fix/path-variable-segment-names`
+- Task: `m1-http-engine`, branch `feature/m1-http-engine`
 - State: PR open, waiting for the maintainer.
 
 ## Done
 
 - Plan approved and recorded: PRs #1 to #3 (D-001 to D-029). No open questions.
 - **M0 complete**: repo hygiene (PR #4), Cargo workspace (PR #5), CI (PR #6).
-- `m1-core-model` (PR #7), `m1-file-format` (PR #8), `m1-workspace-store` (PR #9), `m1-path-variables` (PR #10): all merged. D-039 accepted by the maintainer in PR #10, except one point.
-- `path-variable-segment-names` (PR open): the maintainer's change from PR #10. A path variable is now a whole path segment, as in Postman: `/files/:name.pdf` has the variable `name.pdf`. Name grammar widened to `[A-Za-z_][A-Za-z0-9_.-]*` (D-040). 137 tests in `core`.
+- `m1-core-model` (PR #7), `m1-file-format` (PR #8), `m1-workspace-store` (PR #9), `m1-path-variables` (PR #10): all merged.
+- `path-variable-segment-names` (PR #11, merged): a path variable is a whole path segment, as in Postman; names may contain `.` and `-` (D-040, accepted by the merge).
+- `m1-http-engine` (PR open): `damnhttp-http` sends requests with reqwest + rustls: all body kinds, redirects with the chain recorded, timeout, proxy, custom CA, skip TLS verification, cancellation, response body streamed to a file, sizes and timing, typed errors without secrets. 29 tests against a local HTTP / HTTPS server (D-041).
 
 ## What is stubbed or missing in `core`
 
@@ -23,7 +24,12 @@ Last updated: 2026-10-13
 - No file watching: the tree is read on demand (planned for M3).
 - A file with a newer `version` is refused with an error; showing it read-only in the UI comes with the UI tasks.
 
-`core` has everything M1 needs from it. `http`, `import`, `git` are empty and there is no `app` crate or frontend yet.
+`core` and `http` have everything M1 needs from them, but nothing connects them yet: no code turns a `Request` into an `HttpRequest` (`m1-send-and-response`). `import` and `git` are empty and there is no `app` crate or frontend.
+
+## What is limited in `http`
+
+- No DNS / connect / TLS timing breakdown; no connection reuse; no zstd (D-041).
+- No client certificates, no cookies jar, no HTTP/3.
 
 ## In progress
 
@@ -35,11 +41,11 @@ Last updated: 2026-10-13
 
 ## Open PRs
 
-- `fix: treat a whole path segment as the path variable name` (`fix/path-variable-segment-names` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/11
+- `feat: add the HTTP engine` (`feature/m1-http-engine` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/12
 
 ## Exact next step
 
 1. Confirm the PR is merged, then `git switch develop && git pull`.
-2. `feature/m1-http-engine`: the `http` crate (reqwest + rustls, redirects, timeouts, proxy, custom CA, skip TLS verification, timing, sizes, cancellation, body to a temp file), tested against a local server. Decide there how query parameters are encoded when sent (D-039). It needs new dependencies: check each with `cargo deny` and extend `deny.toml` only where needed. It does not depend on the open PR except for `docs/project/`.
-3. Then `feature/m1-tauri-skeleton` and `feature/m1-packaging-check`.
+2. `feature/m1-tauri-skeleton`: the `app` crate (Tauri 2), Vite + React + TypeScript strict + Zustand, tauri-specta bindings, restrictive capabilities, app identifier in one place, theme and i18n scaffolding, ESLint, Vitest, frontend CI jobs. Tauri pulls in MPL-2.0 crates: review and extend `deny.toml` there (D-031).
+3. Then `feature/m1-packaging-check` (AppImage, dmg, NSIS build-only workflow; watch `aws-lc-sys` on Windows and macOS).
 4. Still open for the maintainer (see `NOTES.md`): repo settings (required checks, merge commits only).

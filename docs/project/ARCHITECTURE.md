@@ -1,6 +1,6 @@
 # Architecture
 
-State: the Cargo workspace exists. `core` has the data model (`m1-core-model`), the file format (`m1-file-format`), the workspace store (`m1-workspace-store`) and the URL parser (`m1-path-variables`); `http`, `import` and `git` are empty. The `app` crate and the frontend arrive in `m1-tauri-skeleton`. Sections describing later tasks are the approved plan.
+State: the Cargo workspace exists. `core` has the data model (`m1-core-model`), the file format (`m1-file-format`), the workspace store (`m1-workspace-store`) and the URL parser (`m1-path-variables`); `http` has the request engine (`m1-http-engine`); `import` and `git` are empty. The `app` crate and the frontend arrive in `m1-tauri-skeleton`. Sections describing later tasks are the approved plan.
 
 ## Repository layout (planned)
 
@@ -140,6 +140,21 @@ Rules it enforces (D-038):
 - `save_request` splits the request: committed part to the request file, local part to `.damnhttp/values.yaml`. `read_request` merges them. Local values are read before anything is written, so a corrupt `values.yaml` stops the save without losing data.
 - A broken file is listed in `Tree::problems` and does not hide the rest of the tree.
 - Environments are not handled yet (`m2-environments`).
+
+## HTTP engine (`damnhttp-http`)
+
+`send(&HttpRequest, &HttpOptions, body_path)` performs one exchange with `reqwest` over `rustls` and returns an `HttpResponse`. `send_cancellable` adds a cancel signal. No Tauri, no UI (D-041).
+
+| Type | Contents |
+|---|---|
+| `HttpRequest` | `method`, `url` (fully resolved, query included), `headers`, `body: HttpBody` (`None`, `Raw`, `FormUrlencoded`, `Multipart` with text and file fields). |
+| `HttpOptions` | `follow_redirects`, `max_redirects`, `timeout`, `verify_tls`, `proxy: ProxyMode` (`System`, `Disabled`, `Url`), `extra_ca_pem`. |
+| `HttpResponse` | `status`, `status_text`, `http_version`, `headers`, `final_url`, `redirects`, `body_path`, `body_size`, `headers_size`, `timing { time_to_headers, download, total }`, `remote_address`. |
+| `HttpError` | `kind: HttpErrorKind` (for the UI to translate) and `detail` (diagnostic text without URL, header values or body). |
+
+- The response body is streamed to `body_path`; the caller chooses the file and deletes it when done. A failed or cancelled request removes the partial file.
+- The engine refuses a URL that still contains `{{variables}}`. Turning a `core` `Request` into an `HttpRequest` (path variables, query, headers, body, later variables and auth) is the job of `m1-send-and-response`.
+- A new client is built for every request, because proxy, CA and TLS settings can differ per request.
 
 ## URL templates (`core::url`)
 

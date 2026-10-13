@@ -6,6 +6,8 @@ None. The questions from PR #1 and PR #2 are answered and recorded in `DECISIONS
 
 ## Possible later features
 
+- Separate DNS / connect / TLS timings in the response viewer (needs a custom connector, D-041).
+- Connection reuse between requests, and zstd response decompression (D-041).
 - A per-field "keep local" option for header values and body / form fields, so they can stay out of committed files like query and path variable values do (D-025).
 - "Share with team" into an environment variable; v1 is collection scope only (D-027).
 - An OS keychain backend for secrets (D-019).
@@ -32,7 +34,9 @@ Known risks to check then:
 
 - A Cargo package must not be named `core` (D-001).
 - `url::substitute_path_variables` leaves `{{references}}` inside a path variable value untouched. `m2-variable-engine` has to percent-encode what they resolve to (D-039).
-- `m1-http-engine` decides how query parameter names and values are encoded when sent; they are stored exactly as typed (D-039).
+- Query parameters are stored and sent as typed; only characters illegal in a URL are encoded (D-039, D-041).
+- The HTTP tests start servers on `127.0.0.1` and one test resolves a `.invalid` host name; they need a working loopback interface and resolver, nothing else.
+- `aws-lc-sys` (TLS crypto, via reqwest) builds C code. If a Windows or macOS CI build fails on it, see the aws-lc-rs build requirements before changing crypto provider (D-041).
 - `url::analyze` returns byte offsets. The `url_analyze` command (`m1-tauri-skeleton` / `m1-request-editor`) must convert them to UTF-16 offsets for JavaScript.
 - Every session needs an SSH agent holding both `~/.ssh/github_auth` (push) and `~/.ssh/github_sign` (commit signing). Without it, `git fetch` over SSH fails; reading still works through `gh`.
 - Merged branches are deleted on request (done on 2026-10-12 for everything up to PR #8). Cloud sessions can leave `ccr-*` branches on GitHub; delete them once their PR is merged.

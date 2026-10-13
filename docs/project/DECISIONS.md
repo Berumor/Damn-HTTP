@@ -325,3 +325,21 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
 - Decision: a path variable is a whole path segment of the form `:name`; the name runs to the next `/` or the end of the path. `/files/:name.pdf` has the variable `name.pdf`. To make that possible the name grammar is widened from `[A-Za-z_][A-Za-z0-9_]*` (D-013, D-028) to `[A-Za-z_][A-Za-z0-9_.-]*`. A segment that starts with `:` but is not such a name, including one that contains a `{{reference}}`, is ordinary text.
 - Alternatives: keep the strict grammar and treat `/:name.pdf` as plain text (the user's variable would silently not exist); allow any character in the name as Postman does (names then need escaping in files and in the UI).
 - Consequences: importers can keep Postman path variable names with dots and dashes unchanged; other names (spaces, non-ASCII) have to be converted and reported. `schemas/v1/request.schema.json` and `docs/FORMAT.md` use the new grammar. No format version bump: no release has shipped the old rule.
+
+## D-041: HTTP engine choices (2026-10-13, proposed)
+
+- Context: `m1-http-engine`. The brief fixes `reqwest` + `rustls`, sent from Rust.
+- Decision:
+  - **TLS:** reqwest's `rustls` feature: the `aws-lc-rs` crypto provider and the platform certificate verifier, so certificates trusted by the operating system (including a company CA installed there) are trusted. Custom CAs are added to the system's, not a replacement. No native TLS, no OpenSSL, no `ring` in the build.
+  - **Query encoding (left open by D-039):** the URL is sent as typed. Only characters that cannot appear in a URL are percent-encoded (a space becomes `%20`, non-ASCII becomes UTF-8 `%XX`); existing `%XX` sequences and `+` are not touched.
+  - **No scheme means `http://`**, so `localhost:8080/x` works as typed. Only `http` and `https` are sent.
+  - **A leftover `{{variable}}` is an error** (`UnresolvedVariables`, naming the variables) instead of being sent percent-encoded.
+  - **Content-Type:** implied by the body (`application/json` etc. from the caller, `application/x-www-form-urlencoded`, multipart with a generated boundary). A `Content-Type` header typed by the user replaces it, except for multipart, where the typed header is ignored because it could not carry the right boundary.
+  - **Defaults:** `User-Agent: DamnHTTP/<version>` unless the user sets one; no `Referer` on redirects; 30 s timeout for the whole exchange; up to 10 redirects. `max_redirects: 0` means "do not follow".
+  - **Response body on disk**, streamed, decompressed (gzip, deflate, brotli). `body_size` is the decompressed size.
+  - **Timing** has `time_to_headers`, `download` and `total`. DNS, connect and TLS times are not separated: reqwest does not expose them, and getting them means replacing its connector.
+  - **One client per request.** Connections are not reused between sends, so every send includes connection setup.
+  - **Errors** carry a `kind` for the UI and a `detail` for diagnostics. The URL is stripped from transport errors and header values never appear, since both can hold secrets.
+  - `deny.toml` now allows `CDLA-Permissive-2.0`, the permissive data license of the Mozilla root certificate list (`webpki-root-certs`).
+- Alternatives: `ring` as crypto provider (reqwest's default is now `aws-lc-rs`; using `ring` means installing a process-wide provider by hand); a shared client (wrong settings would leak between requests); zstd decompression (needs a C library; add it if asked for).
+- Consequences: `aws-lc-sys` compiles C code, so Windows and macOS builds need a C compiler; `m1-packaging-check` will show whether CI needs anything more. `status_text` is the standard phrase for the code, not what the server sent.
