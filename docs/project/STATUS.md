@@ -38,7 +38,7 @@ Last updated: 2026-10-13
 
 ## Open PRs
 
-- `feat: add the Tauri app skeleton and frontend scaffolding` (`feature/m1-tauri-skeleton` → `develop`): PR_URL
+- `feat: add the Tauri app skeleton and frontend scaffolding` (`feature/m1-tauri-skeleton` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/13
 
 ## Exact next step
 
