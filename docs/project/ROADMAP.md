@@ -26,8 +26,10 @@ Legend: `[ ]` todo, `[~]` in progress or PR open, `[x]` merged.
 - [x] `m1-http-engine`: `http` crate: reqwest + rustls, redirects, timeouts, proxy, custom CA, skip TLS verification, timing, sizes, cancellation, body to temp file. Tests against a local server.
 - [x] `m1-tauri-skeleton`: `app` crate, Tauri 2 + Vite + React + TS strict + Zustand, tauri-specta bindings, restrictive capabilities, app identifier in one place, theme and i18n scaffolding, ESLint, Vitest, frontend CI jobs (lint, typecheck, tests).
 - [x] `frontend-tooling-defaults`: Prettier, ESLint and Vitest back to default settings (D-043), from the maintainer's review of PR #13.
-- [~] `m1-packaging-check`: build-only workflow for Linux AppImage (`ubuntu-22.04`), macOS arm64 + x86_64 `.dmg`, Windows NSIS. Run the AppImage on CachyOS and write findings to `NOTES.md`. Done right after the skeleton, before the UI work.
-- [ ] `m1-workspace-ui`: onboarding ("Create new workspace", "Open local folder"), sidebar tree with create / rename / duplicate / delete / drag and drop.
+- [x] `m1-packaging-check`: merged (PR #15, D-044).
+- [~] `m1-workspace-commands`: Tauri commands and app state for workspaces and the tree (pick folder, create, open, close, recent, tree, create / rename / duplicate / move / delete), with the allowed-folders rule (D-045). First part of what the plan called `m1-workspace-ui`.
+- [ ] `m1-workspace-ui`: start screen ("Create new workspace", "Open local folder", recent list) and the sidebar tree with create / rename / duplicate / delete, using the commands above. Component tests.
+- [ ] `m1-tree-drag-and-drop`: drag and drop in the sidebar (`dnd-kit`), on top of `node_move`.
 - [ ] `m1-request-editor`: method + URL bar (pasted URLs split into committed URL + local values), "not synced" marker on local values with the explanation for non-reference values (D-024), URL highlighting through `url_analyze`, query table, path variable table, headers table, body editors (none, JSON, text, form-urlencoded, multipart), description, save, tabs, shortcuts for send and new request.
 - [ ] `m1-send-and-response`: send / cancel wiring, response viewer (status, time, size, headers, pretty / raw / preview, JSON folding, search, copy, save to file), large-body handling.
 - [ ] `m1-smoke-test`: Playwright smoke test (create workspace, create request, send to a local server, see the response) wired into CI.

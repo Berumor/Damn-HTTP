@@ -190,17 +190,18 @@ The `url_analyze` command must convert the byte offsets to UTF-16 offsets for th
 
 ## Tauri commands
 
-Naming: `<area>_<verb>`. Paths are workspace-relative strings. M1 and M2 commands are the plan; M3+ are provisional and will be settled when those milestones are planned.
+✓ marks commands that exist. Naming: `<area>_<verb>`. Paths are workspace-relative strings. M1 and M2 commands are the plan; M3+ are provisional and will be settled when those milestones are planned.
 
 | Milestone | Command | Purpose |
 |---|---|---|
-| M1 | `app_info` | version, platform, identifier |
+| M1 ✓ | `app_info` | version, platform, identifier |
 | M1 | `settings_get`, `settings_set` | app settings (theme, language, proxy, CA, TLS verification) |
-| M1 | `workspace_create`, `workspace_open`, `workspace_close` | open/create via a backend-side folder picker or a recent path |
-| M1 | `workspace_recent_list` | recent workspaces |
-| M1 | `workspace_tree` | the whole tree (names, kinds, methods, order) for the sidebar |
-| M1 | `collection_create`, `folder_create`, `request_create` | new nodes |
-| M1 | `node_rename`, `node_duplicate`, `node_move`, `node_delete` | tree operations; `node_move` covers drag and drop |
+| M1 ✓ | `workspace_pick_folder` | native folder dialog, opened by the backend; the chosen folder becomes allowed |
+| M1 ✓ | `workspace_create`, `workspace_open`, `workspace_close`, `workspace_current` | create / open a workspace in an allowed folder; `workspace_open` also repairs duplicate ids |
+| M1 ✓ | `workspace_recent` | workspaces opened before, most recent first |
+| M1 ✓ | `workspace_tree` | the whole tree (names, kinds, methods, ids) and the unreadable files |
+| M1 ✓ | `collection_create`, `folder_create`, `request_create` | new nodes; each returns the new path |
+| M1 ✓ | `node_rename`, `node_duplicate`, `node_move`, `node_delete` | tree operations; `node_move` covers drag and drop; each returns the new path |
 | M1 | `request_read`, `request_save` | request editor. Read merges the committed file with local values; save splits them (D-021). |
 | M1 | `collection_read`, `collection_save`, `folder_read`, `folder_save` | collection / folder settings |
 | M1 | `url_analyze` | the shared URL parser: path variable names, `{{var}}` spans, query split (D-028) |
@@ -240,6 +241,18 @@ trait GitEngine {
 - The app-facing engine composes both. With no system git, network methods return `GitError::GitNotInstalled` and everything else works.
 
 ## App shell (`damnhttp-app`)
+
+| Module | Contents |
+|---|---|
+| `commands` | The `#[tauri::command]` functions: thin `async` wrappers. |
+| `ops` | What the commands do, as plain functions over `AppState`; tested on temporary directories without Tauri. |
+| `state` | `AppState`: the open workspace (one per window), the folders the webview may open, the recent list. |
+| `dto` | The types sent to the frontend (`WorkspaceInfo`, `TreeDto`, ...), converted from `core` types. `core` itself has no serde or specta derives (D-045). |
+| `error` | `AppError` and the mapping from `StoreError` to stable codes (`NOT_A_WORKSPACE`, `INVALID_PATH`, ...). |
+
+**Folders.** The webview cannot name an arbitrary folder. `workspace_create` and `workspace_open` accept only a folder the user chose in the native dialog (`workspace_pick_folder`) or one from the recent list; anything else is `FOLDER_NOT_ALLOWED`. Inside a workspace, `core::store` confines paths to `collections/`.
+
+**Recent workspaces** are stored as JSON in the app's configuration directory (`recent-workspaces.json`), not in any workspace.
 
 A command is callable from the webview only if it is in three places, and a test (`every_command_is_declared_and_granted`) checks they agree (D-042):
 
