@@ -26,7 +26,10 @@ None. The questions from PR #1 and PR #2 are answered and recorded in `DECISIONS
 
 - 2026-10-13, CachyOS, KDE Plasma on Wayland, WebKitGTK 2.54.1: a debug build (`pnpm tauri build --debug --no-bundle`) starts, renders correctly, follows the system dark theme and reaches the backend over IPC. No workaround needed. Screenshot: `docs/screenshots/m1-tauri-skeleton.png`.
 - The window shows a generic icon in the title bar when run from `target/`; an installed build gets its icon from the desktop file.
-- AppImage results come with `m1-packaging-check`.
+- 2026-10-13, first packaging run (workflow run 38451177211): all four targets build with no extra setup. `aws-lc-sys` needed nothing special on Windows or macOS. Sizes: AppImage 81 MB (it bundles WebKitGTK), macOS `.dmg` 2.9 MB, Windows NSIS installer 2.0 MB.
+- 2026-10-13, the AppImage built on `ubuntu-22.04`, run on CachyOS (KDE Plasma, Wayland): it starts and keeps running with no error output. The machine has `fuse3` only, no `fuse2` / `libfuse2`, and that was enough. **Not yet confirmed by eye** that the window renders (the blank-window risk below); the maintainer was asked to check.
+- The Intel macOS build is cross-compiled on an Apple Silicon runner (`--target x86_64-apple-darwin`); it has not been run on real Intel hardware.
+- Nobody has run the macOS or Windows installers yet. They are unsigned: macOS Gatekeeper and Windows SmartScreen will warn (to be documented in the README in M7).
 
 Known risks to check then:
 
@@ -36,6 +39,7 @@ Known risks to check then:
 ## Gotchas
 
 - A Cargo package must not be named `core` (D-001).
+- Do not take "active window" screenshots to check the app: on 2026-10-13 that captured the maintainer's browser instead (the file was deleted, never committed). Ask the maintainer to look, or capture only when the app window is known to be focused.
 - Building the app crate on Linux needs: `webkit2gtk-4.1`, `libayatana-appindicator` (or `libappindicator-gtk3`), `librsvg`, `xdotool`, `openssl`, and a C toolchain. CI installs the Debian equivalents in the Rust job.
 - The app icon in `crates/app/icons/` is a placeholder. To replace it: `pnpm tauri icon <1024px.png> -o crates/app/icons`, then delete the `android`, `ios`, `Square*` and `StoreLogo` files it also creates.
 - pnpm 11 refuses packages published very recently unless an exception is written to `pnpm-workspace.yaml`. Do not add exceptions; pick a slightly older version (D-042).
