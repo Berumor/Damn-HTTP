@@ -25,7 +25,7 @@
       "items": {
         "type": "object",
         "properties": {
-          "name": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+          "name": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_.-]*$" },
           "value": { "$ref": "common.schema.json#/$defs/reference" },
           "description": { "$ref": "common.schema.json#/$defs/description" }
         },

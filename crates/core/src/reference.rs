@@ -15,12 +15,12 @@ pub fn is_valid_variable_name(name: &str) -> bool {
 }
 
 /// Returns `true` if `name` is a valid path variable name:
-/// `[A-Za-z_][A-Za-z0-9_]*`.
+/// `[A-Za-z_][A-Za-z0-9_.-]*` (D-040).
 pub fn is_valid_path_variable_name(name: &str) -> bool {
     let mut chars = name.chars();
     match chars.next() {
         Some(first) if first.is_ascii_alphabetic() || first == '_' => {
-            chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+            chars.all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '-'))
         }
         _ => false,
     }
@@ -94,10 +94,12 @@ mod tests {
 
     #[test]
     fn path_variable_names() {
-        for ok in ["id", "_id", "petId", "a1_b2"] {
+        for ok in [
+            "id", "_id", "petId", "a1_b2", "name.pdf", "user-id", "a.b-c_d",
+        ] {
             assert!(is_valid_path_variable_name(ok), "{ok:?}");
         }
-        for bad in ["", "1a", "a-b", "a.b", "é", "a b"] {
+        for bad in ["", "1a", "-a", ".a", "é", "a b", "a:b", "a/b", "a{{b}}"] {
             assert!(!is_valid_path_variable_name(bad), "{bad:?}");
         }
     }
