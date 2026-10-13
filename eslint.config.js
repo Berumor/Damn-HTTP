@@ -2,6 +2,8 @@ import js from "@eslint/js";
 import reactHooks from "eslint-plugin-react-hooks";
 import tseslint from "typescript-eslint";
 
+// The recommended rule sets of ESLint, typescript-eslint and the React hooks
+// plugin, unchanged. The one project rule is at the end.
 export default tseslint.config(
   {
     ignores: [
@@ -10,23 +12,15 @@ export default tseslint.config(
       "node_modules/",
       "crates/",
       "ui/src/bindings.ts",
-      "eslint.config.js",
     ],
   },
   js.configs.recommended,
-  ...tseslint.configs.strictTypeChecked,
+  ...tseslint.configs.recommended,
+  reactHooks.configs.flat.recommended,
   {
-    languageOptions: {
-      parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
-      },
-    },
-    plugins: {
-      "react-hooks": reactHooks,
-    },
     rules: {
-      ...reactHooks.configs.recommended.rules,
+      // Not a style choice: the frontend must reach Rust only through the
+      // generated, typed commands.
       "no-restricted-imports": [
         "error",
         {
@@ -39,13 +33,6 @@ export default tseslint.config(
           ],
         },
       ],
-    },
-  },
-  {
-    // Mocks are passed around as plain functions in tests.
-    files: ["ui/src/**/*.test.{ts,tsx}", "ui/src/test/**"],
-    rules: {
-      "@typescript-eslint/unbound-method": "off",
     },
   },
 );

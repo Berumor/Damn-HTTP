@@ -46,7 +46,7 @@ Promotion PRs are opened by the maintainer. Nothing reaches `main` without havin
 ## TypeScript / React
 
 - `strict: true`, plus `noUncheckedIndexedAccess`. No `any`; no `@ts-ignore` without a comment explaining why.
-- ESLint + Prettier. Function components and hooks only.
+- ESLint and Prettier with their default / recommended settings (D-043): do not add rule overrides or formatter options without asking the maintainer. Function components and hooks only.
 - The frontend calls Rust only through `ui/src/bindings.ts` (generated; never edited by hand). Importing `invoke` directly is an ESLint error.
 - Adding a command: write it in `crates/app/src/commands.rs` with `#[tauri::command]` and `#[specta::specta]`, register it in `bindings()`, add its name to `COMMANDS` in `build.rs` and to `NAMES` in `commands.rs`, grant `allow-<name>` in `capabilities/default.json`, then run `UPDATE_BINDINGS=1 cargo test -p damnhttp-app bindings`.
 - Prettier formats the frontend and its config files only (`.prettierignore`); Markdown and Rust are not touched by it.
