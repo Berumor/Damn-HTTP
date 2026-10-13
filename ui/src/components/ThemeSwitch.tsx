@@ -11,7 +11,11 @@ export function ThemeSwitch() {
   const setTheme = useSettings((state) => state.setTheme);
 
   return (
-    <div className={styles.group} role="radiogroup" aria-label={t("theme.label")}>
+    <div
+      className={styles.group}
+      role="radiogroup"
+      aria-label={t("theme.label")}
+    >
       {options.map((option) => (
         <button
           key={option}
