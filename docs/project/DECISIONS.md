@@ -344,7 +344,7 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
 - Alternatives: `ring` as crypto provider (reqwest's default is now `aws-lc-rs`; using `ring` means installing a process-wide provider by hand); a shared client (wrong settings would leak between requests); zstd decompression (needs a C library; add it if asked for).
 - Consequences: `aws-lc-sys` compiles C code, so Windows and macOS builds need a C compiler; `m1-packaging-check` will show whether CI needs anything more. `status_text` is the standard phrase for the code, not what the server sent.
 
-## D-042: App shell and frontend scaffolding (2026-10-13, proposed)
+## D-042: App shell and frontend scaffolding (2026-10-13, accepted; its ESLint and Prettier settings are replaced by D-043)
 
 - Context: `m1-tauri-skeleton`. The brief asks for restrictive capabilities, typed commands, the identifier in one place, strict TypeScript, i18n and themes.
 - Decision:
@@ -361,3 +361,14 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
   - **The icon is a placeholder** drawn by a script (a `>_` prompt on a dark tile).
 - Alternatives: Tauri's default behaviour, where every registered command is callable from every window; a CI step that regenerates bindings and diffs them (needs the frontend toolchain in the Rust job).
 - Consequences: adding a command touches four places (see `CONVENTIONS.md`); forgetting one fails a test, not a user.
+
+## D-043: Default settings for Prettier, ESLint and the test runner (2026-10-13, accepted)
+
+- Context: the maintainer's review of PR #13: "Use the default value for prettier, eslint and for test". The other points of D-042 were approved there (TypeScript 6.0, theme in local storage for now, MPL-2.0 per crate, no `user-event` for now, placeholder icon until the designer delivers one).
+- Decision:
+  - **Prettier:** no configuration file; all defaults (80 columns, double quotes, semicolons). `.prettierignore` still limits it to the frontend.
+  - **ESLint:** the `recommended` sets of ESLint, typescript-eslint and the React hooks plugin, unchanged. No type-checked or `strict` sets.
+  - **Vitest:** defaults, plus the two settings without which React component tests cannot run: the `jsdom` environment and one setup file (matchers, cleanup, i18n).
+  - **Kept, because it is architecture and not style:** the rule that forbids importing `invoke` directly, so the frontend can only call Rust through the generated typed commands (brief requirement). `tsconfig.json` stays strict, also a brief requirement.
+- Alternatives: the stricter type-checked ESLint sets from D-042 (more findings, more configuration to understand).
+- Consequences: do not add rule overrides or formatter options without asking the maintainer.
