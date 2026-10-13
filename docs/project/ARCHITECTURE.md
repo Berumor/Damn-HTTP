@@ -1,8 +1,8 @@
 # Architecture
 
-State: the Cargo workspace exists. `core` has the data model (`m1-core-model`), the file format (`m1-file-format`), the workspace store (`m1-workspace-store`) and the URL parser (`m1-path-variables`); `http` has the request engine (`m1-http-engine`); `import` and `git` are empty. The `app` crate and the frontend arrive in `m1-tauri-skeleton`. Sections describing later tasks are the approved plan.
+State: `core` has the data model, file format, workspace store and URL parser; `http` sends requests; `app` is a Tauri window with one command (`app_info`) and the frontend scaffolding (`m1-tauri-skeleton`). Nothing connects the UI to `core` or `http` yet. `import` and `git` are empty. Sections describing later tasks are the approved plan.
 
-## Repository layout (planned)
+## Repository layout
 
 ```
 Cargo.toml              Cargo workspace (version 0.0.0 placeholder, shared lints and deps)
@@ -10,17 +10,28 @@ rust-toolchain.toml     pinned stable toolchain
 deny.toml               cargo-deny config (licenses compatible with Apache-2.0)
 clippy.toml             lets tests use unwrap / expect / panic
 rustfmt.toml
-package.json            frontend + Tauri CLI scripts (pnpm)
-vite.config.ts
+package.json            frontend + Tauri CLI scripts (pnpm); .node-version pins Node
+vite.config.ts          Vite and Vitest config (root: ui/, output: dist/)
+tsconfig.json, eslint.config.js, .prettierrc.json, .prettierignore
 crates/
   core/     damnhttp-core    models, file format, variables, path variables, auth inheritance,
                              secret-leak detection, workspace store. No Tauri, no network.
   http/     damnhttp-http    request execution (reqwest + rustls). No Tauri.
   import/   damnhttp-import  one module per source format, each returns (collections, report)
   git/      damnhttp-git     GitEngine trait + implementations
-  app/      damnhttp-app     Tauri 2 shell: commands, state, events, capabilities, tauri.conf.json
+  app/      damnhttp-app     Tauri 2 shell
+    tauri.conf.json          window, CSP, bundle targets, and the app identifier (the only place it is set)
+    build.rs                 the list of commands the frontend may call
+    capabilities/default.json  what the main window is granted
+    icons/                   placeholder icon set
+    src/commands.rs, error.rs, lib.rs
 ui/                     React + TypeScript (strict) sources
-  bindings.ts           generated from Rust by tauri-specta; never edited by hand
+  index.html
+  src/bindings.ts       generated from Rust by tauri-specta; never edited by hand
+  src/stores/           Zustand stores, one per area
+  src/i18n/             i18next setup and locales/en.json
+  src/styles/tokens.css design tokens for both themes
+  src/components/, src/lib/, src/test/
 docs/                   FORMAT.md, GIT_AUTH.md, RELEASING.md, user guides
 docs/project/           project memory (this directory)
 schemas/v1/             JSON Schemas for the file format, one per kind + file.schema.json
@@ -43,7 +54,7 @@ core ──> nothing in this workspace
 
 ## Data flow
 
-1. The frontend calls a typed command from `ui/bindings.ts`.
+1. The frontend calls a typed command from `ui/src/bindings.ts`.
 2. `app` validates the input, resolves workspace-relative paths (rejecting anything that escapes the workspace root), and calls into `core` / `http` / `git` / `import`.
 3. The result comes back as a typed value or a typed `AppError { code, message, details }`. The frontend maps `code` to an i18n string.
 4. Long-running work (send, clone, sync, import) runs on the async runtime, is cancellable by id, and reports through Tauri events.
@@ -228,9 +239,23 @@ trait GitEngine {
 - `SystemGit` runs the `git` executable non-interactively (`GIT_TERMINAL_PROMPT=0`, no stdin, timeouts, captured stderr) and maps stderr to typed errors.
 - The app-facing engine composes both. With no system git, network methods return `GitError::GitNotInstalled` and everything else works.
 
-## Frontend (planned)
+## App shell (`damnhttp-app`)
 
-- React 18+, Vite, TypeScript strict, Zustand stores per area (`workspace`, `tabs`, `environments`, `sync`, `settings`).
+A command is callable from the webview only if it is in three places, and a test (`every_command_is_declared_and_granted`) checks they agree (D-042):
+
+1. `commands.rs`, registered in `bindings()` in `lib.rs` (this generates the TypeScript wrapper);
+2. `COMMANDS` in `build.rs` (Tauri then generates the permission `allow-<command>`);
+3. `capabilities/default.json` (grants that permission to the main window).
+
+The capability grants nothing else: no `core:` permissions, no plugins. The content security policy allows only the app's own files and the IPC endpoint; the development policy also allows the Vite dev server.
+
+`ui/src/bindings.ts` is checked by the test `bindings_are_up_to_date`; regenerate it with `UPDATE_BINDINGS=1 cargo test -p damnhttp-app bindings`.
+
+The app version is not in `tauri.conf.json`: Tauri takes it from the Cargo package, so the workspace version is the single place CI stamps.
+
+## Frontend
+
+- React 19, Vite, TypeScript strict, Zustand stores per area (`workspace`, `tabs`, `environments`, `sync`, `settings`).
 - CodeMirror 6 for URL bar, JSON/text bodies and the response viewer, with one shared extension for `{{var}}` highlighting, autocomplete and hover.
 - CSS variables for theming (dark/light), CSS modules, no heavy component kit. `i18next` for strings. `dnd-kit` for the tree.
 - Tests: Vitest + Testing Library for components, one Playwright smoke test.

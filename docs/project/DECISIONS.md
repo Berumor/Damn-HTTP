@@ -326,7 +326,7 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
 - Alternatives: keep the strict grammar and treat `/:name.pdf` as plain text (the user's variable would silently not exist); allow any character in the name as Postman does (names then need escaping in files and in the UI).
 - Consequences: importers can keep Postman path variable names with dots and dashes unchanged; other names (spaces, non-ASCII) have to be converted and reported. `schemas/v1/request.schema.json` and `docs/FORMAT.md` use the new grammar. No format version bump: no release has shipped the old rule.
 
-## D-041: HTTP engine choices (2026-10-13, proposed)
+## D-041: HTTP engine choices (2026-10-13, accepted)
 
 - Context: `m1-http-engine`. The brief fixes `reqwest` + `rustls`, sent from Rust.
 - Decision:
@@ -343,3 +343,21 @@ ADR-style log. Newest at the bottom. Status is `accepted` (from the brief or app
   - `deny.toml` now allows `CDLA-Permissive-2.0`, the permissive data license of the Mozilla root certificate list (`webpki-root-certs`).
 - Alternatives: `ring` as crypto provider (reqwest's default is now `aws-lc-rs`; using `ring` means installing a process-wide provider by hand); a shared client (wrong settings would leak between requests); zstd decompression (needs a C library; add it if asked for).
 - Consequences: `aws-lc-sys` compiles C code, so Windows and macOS builds need a C compiler; `m1-packaging-check` will show whether CI needs anything more. `status_text` is the standard phrase for the code, not what the server sent.
+
+## D-042: App shell and frontend scaffolding (2026-10-13, proposed)
+
+- Context: `m1-tauri-skeleton`. The brief asks for restrictive capabilities, typed commands, the identifier in one place, strict TypeScript, i18n and themes.
+- Decision:
+  - **Commands are denied by default.** `build.rs` declares the app's commands in an app manifest, so each needs an explicit `allow-<command>` permission in `capabilities/default.json`. The capability grants nothing from Tauri's core or from plugins. Two tests keep the bindings, `build.rs` and the capability file in agreement.
+  - **CSP:** only the app's own files and the IPC endpoint; inline styles allowed (CodeMirror needs them later); inline scripts only in development for Vite.
+  - **Bindings freshness is a Rust test**, so the existing CI job catches a stale `ui/src/bindings.ts`.
+  - **The identifier `com.damnhttp.app` is only in `crates/app/tauri.conf.json`.** The version is not there at all; Tauri reads it from Cargo.
+  - **TypeScript 6.0, not 7.** `typescript-eslint` does not support TypeScript 7 yet. Revisit when it does.
+  - **ESLint** uses typescript-eslint's strict type-checked rules and forbids importing `invoke` directly. **Prettier** covers the frontend only.
+  - **Theme** follows the operating system by default, with a manual choice stored in the webview's local storage until the settings commands exist.
+  - **Licenses:** MPL-2.0 is allowed for five named crates that Tauri depends on (`cssparser`, `cssparser-macros`, `dtoa-short`, `selectors`, `option-ext`), not globally; `NOTICE` lists them. Two "unmaintained" advisories for build-time macro crates (`paste` via specta, `proc-macro-error` via gtk-rs) are ignored with a reason in `deny.toml`.
+  - **Node 26** pinned in `.node-version`; pnpm pinned by `packageManager`.
+  - **`@testing-library/user-event` is not used:** pnpm's release-age guard flagged its current version as too new and wanted an exception. Tests use `fireEvent`; add `user-event` once a version passes the guard.
+  - **The icon is a placeholder** drawn by a script (a `>_` prompt on a dark tile).
+- Alternatives: Tauri's default behaviour, where every registered command is callable from every window; a CI step that regenerates bindings and diffs them (needs the frontend toolchain in the Rust job).
+- Consequences: adding a command touches four places (see `CONVENTIONS.md`); forgetting one fails a test, not a user.

@@ -47,7 +47,9 @@ Promotion PRs are opened by the maintainer. Nothing reaches `main` without havin
 
 - `strict: true`, plus `noUncheckedIndexedAccess`. No `any`; no `@ts-ignore` without a comment explaining why.
 - ESLint + Prettier. Function components and hooks only.
-- The frontend calls Rust only through `ui/bindings.ts` (generated; never edited by hand). No direct `invoke("...")` with string names.
+- The frontend calls Rust only through `ui/src/bindings.ts` (generated; never edited by hand). Importing `invoke` directly is an ESLint error.
+- Adding a command: write it in `crates/app/src/commands.rs` with `#[tauri::command]` and `#[specta::specta]`, register it in `bindings()`, add its name to `COMMANDS` in `build.rs` and to `NAMES` in `commands.rs`, grant `allow-<name>` in `capabilities/default.json`, then run `UPDATE_BINDINGS=1 cargo test -p damnhttp-app bindings`.
+- Prettier formats the frontend and its config files only (`.prettierignore`); Markdown and Rust are not touched by it.
 - State in Zustand stores, one per area. Components do not hold server state of their own.
 - Every user-visible string goes through i18n. Simple-mode strings use no git vocabulary (see the brief for the wording).
 - Colors and spacing come from CSS variables; no hard-coded colors in components.
@@ -65,7 +67,7 @@ Promotion PRs are opened by the maintainer. Nothing reaches `main` without havin
 
 ## Run, build, test
 
-The Rust commands work today. The frontend commands are planned; correct this section in the PR that introduces each one.
+Everything except the smoke test works today. On Linux the Tauri system libraries must be installed (see `NOTES.md`). Node is pinned in `.node-version`, pnpm in `package.json`.
 
 | Purpose | Command | Available from |
 |---|---|---|
@@ -75,7 +77,9 @@ The Rust commands work today. The frontend commands are planned; correct this se
 | License / advisory check | `cargo deny check` (install: `cargo install cargo-deny --locked`) | `m0-cargo-workspace` |
 | Install frontend deps | `pnpm install` | `m1-tauri-skeleton` |
 | Run the app | `pnpm tauri dev` | `m1-tauri-skeleton` |
-| Frontend checks | `pnpm lint`, `pnpm typecheck`, `pnpm test` | `m1-tauri-skeleton` |
+| Build the app without installers | `pnpm tauri build --debug --no-bundle` (binary: `target/debug/damnhttp-app`) | `m1-tauri-skeleton` |
+| Regenerate TypeScript bindings | `UPDATE_BINDINGS=1 cargo test -p damnhttp-app bindings` | `m1-tauri-skeleton` |
+| Frontend checks | `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`; `pnpm format` fixes formatting | `m1-tauri-skeleton` |
 | Build installers | `pnpm tauri build` | `m1-tauri-skeleton` |
 | Smoke test | `pnpm e2e` | `m1-smoke-test` |
 
@@ -85,7 +89,8 @@ The Rust commands work today. The frontend commands are planned; correct this se
 
 | Job | Runs on | What it checks |
 |---|---|---|
-| Rust | PR and push | `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, with `--locked` |
+| Rust | PR and push | `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, with `--locked`. Includes the app crate, so the job installs the Tauri system libraries. The tests also check that `ui/src/bindings.ts` is up to date. |
+| Frontend | PR and push | `pnpm lint` (ESLint + Prettier), `pnpm typecheck`, `pnpm test`, `pnpm build` |
 | cargo-deny | PR and push | licenses, advisories, bans, sources (`deny.toml`) |
 | PR title | PR | the title is a Conventional Commit |
 | Commits | PR | every non-merge commit is a Conventional Commit and signed off by its author (`.github/scripts/check-commits.sh`) |
