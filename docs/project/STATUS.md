@@ -43,7 +43,8 @@ Last updated: 2026-10-13
 ## Exact next step
 
 1. Confirm the PR is merged, then `git switch develop && git pull`.
-2. **Still unanswered:** did the AppImage window render correctly on the maintainer's machine? (asked in PR #15 and in chat; see `NOTES.md`, "Platform findings"). Ask again and record the answer.
+2. Ask the maintainer for the result of the macOS test planned for 2026-10-14 and record it in `NOTES.md`. Windows stays untested until they have a machine.
+   **Still unanswered:** did the AppImage window render correctly on the maintainer's machine? (asked in PR #15 and in chat; see `NOTES.md`, "Platform findings"). Ask again and record the answer.
 3. `feature/m1-workspace-ui`: the start screen (create, open, recent) and the sidebar tree with create / rename / duplicate / delete, calling the commands through `ui/src/bindings.ts`. A `workspace` Zustand store holds the open workspace and the tree; reload the tree after every change. Translate `AppError.code` through the i18n catalogue. Component tests with the bindings mocked, as in `ui/src/App.test.tsx`.
 4. Then `feature/m1-tree-drag-and-drop`, then `m1-request-editor`.
 5. Still open for the maintainer (see `NOTES.md`): repo settings (required checks, merge commits only). The app icon stays a placeholder until the maintainer's designer delivers one.

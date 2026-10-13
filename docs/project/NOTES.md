@@ -29,6 +29,7 @@ None. The questions from PR #1 and PR #2 are answered and recorded in `DECISIONS
 - 2026-10-13, first packaging run (workflow run 38451177211): all four targets build with no extra setup. `aws-lc-sys` needed nothing special on Windows or macOS. Sizes: AppImage 81 MB (it bundles WebKitGTK), macOS `.dmg` 2.9 MB, Windows NSIS installer 2.0 MB.
 - 2026-10-13, the AppImage built on `ubuntu-22.04`, run on CachyOS (KDE Plasma, Wayland): it starts and keeps running with no error output. The machine has `fuse3` only, no `fuse2` / `libfuse2`, and that was enough. **Not yet confirmed by eye** that the window renders (the blank-window risk below); the maintainer was asked to check.
 - The Intel macOS build is cross-compiled on an Apple Silicon runner (`--target x86_64-apple-darwin`); it has not been run on real Intel hardware.
+- 2026-10-13: the maintainer will test the macOS builds on 2026-10-14. There is no Windows machine available, so the Windows installer stays untested until the maintainer can reach one.
 - Nobody has run the macOS or Windows installers yet. They are unsigned: macOS Gatekeeper and Windows SmartScreen will warn (to be documented in the README in M7).
 
 Known risks to check then:
