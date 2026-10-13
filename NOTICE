@@ -3,5 +3,16 @@ Copyright 2026 Berumor and the Damn HTTP contributors
 
 This product is licensed under the Apache License, Version 2.0 (see LICENSE).
 
-Third-party components bundled in the binaries, and their licenses, will be
-listed in this file as they are added.
+Third-party components
+
+The binaries include open-source Rust and JavaScript libraries under
+permissive licenses (mainly MIT, Apache-2.0, BSD and ISC). The exact list for
+a given version is in Cargo.lock and pnpm-lock.yaml.
+
+Components under the Mozilla Public License 2.0, used unmodified. Their
+source code is available from https://crates.io under the names below:
+
+  cssparser, cssparser-macros, dtoa-short, selectors, option-ext
+
+The Mozilla root certificate list (webpki-root-certs) is included under the
+Community Data License Agreement, Permissive, Version 2.0.

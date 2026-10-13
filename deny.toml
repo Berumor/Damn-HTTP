@@ -6,6 +6,12 @@ all-features = true
 
 [advisories]
 yanked = "deny"
+# "Unmaintained" notices for build-time macro crates that we cannot replace
+# ourselves. Review this list whenever Tauri or specta is upgraded.
+ignore = [
+    { id = "RUSTSEC-2024-0436", reason = "paste: proc macro used by specta; no fixed version, no runtime code" },
+    { id = "RUSTSEC-2024-0370", reason = "proc-macro-error: used by the gtk-rs 0.18 macros that Tauri 2 depends on on Linux; no runtime code" },
+]
 
 [licenses]
 # Add a license here only in the PR that introduces a dependency needing it,
@@ -30,6 +36,18 @@ unused-allowed-license = "allow"
 # Note for the PR that adds git2 (D-004): libgit2-sys declares "MIT OR Apache-2.0"
 # but bundles libgit2, which is GPL-2.0 with a linking exception. cargo-deny cannot
 # see that from crate metadata. Record it here and in NOTICE in that PR.
+
+# MPL-2.0 is file-level copyleft: these crates are used unmodified, their
+# source is public on crates.io, and NOTICE says so. That is compatible with
+# shipping the app under Apache-2.0. It is allowed per crate, not globally,
+# so a new MPL dependency gets a review (D-042).
+exceptions = [
+    { crate = "cssparser", allow = ["MPL-2.0"] },
+    { crate = "cssparser-macros", allow = ["MPL-2.0"] },
+    { crate = "dtoa-short", allow = ["MPL-2.0"] },
+    { crate = "selectors", allow = ["MPL-2.0"] },
+    { crate = "option-ext", allow = ["MPL-2.0"] },
+]
 
 [licenses.private]
 # Our own unpublished workspace crates.

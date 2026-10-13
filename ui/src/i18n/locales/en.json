@@ -1,0 +1,17 @@
+{
+  "app": {
+    "name": "Damn HTTP",
+    "tagline": "A REST client your whole team can sync.",
+    "version": "Version {{version}}"
+  },
+  "welcome": {
+    "title": "Nothing to open yet",
+    "body": "Workspaces, requests and sync arrive in the next builds. This window shows that the app starts and can talk to its backend."
+  },
+  "theme": {
+    "label": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  }
+}

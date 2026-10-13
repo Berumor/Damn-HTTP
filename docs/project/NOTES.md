@@ -15,15 +15,18 @@ None. The questions from PR #1 and PR #2 are answered and recorded in `DECISIONS
 ## Things the maintainer needs to do outside the repo
 
 - [x] **Toolchain on this machine (CachyOS).** Installed 2026-10-09: rustup (Rust 1.99.0), Node 26, pnpm 11, webkit2gtk-4.1, cargo-deny (via `cargo install`). Still to come: Playwright browsers (`m1-smoke-test`).
-- [ ] **Repository settings** (full list will be in `docs/RELEASING.md`, M7). Useful now: allow merge commits only, disable squash and rebase merging (D-023); turn on "Automatically delete head branches" so merged branches are removed; after `m0-ci` merges, protect `main`, `beta`, `develop` and require these checks: "Rust (fmt, clippy, tests)", "cargo-deny (licenses, advisories)", "PR title (Conventional Commits)", "Commits (Conventional Commits, DCO sign-off)". Do not require approvals while there is a single maintainer account (the PR author cannot approve their own PR).
+- [ ] **Repository settings** (full list will be in `docs/RELEASING.md`, M7). Useful now: allow merge commits only, disable squash and rebase merging (D-023); turn on "Automatically delete head branches" so merged branches are removed; after `m0-ci` merges, protect `main`, `beta`, `develop` and require these checks: "Rust (fmt, clippy, tests)", "Frontend (lint, typecheck, tests, build)", "cargo-deny (licenses, advisories)", "PR title (Conventional Commits)", "Commits (Conventional Commits, DCO sign-off)". Do not require approvals while there is a single maintainer account (the PR author cannot approve their own PR).
 - [ ] **Before the first release on `main`** (maintainer's decision, 2026-10-09: deferred until then): the next two items.
 - [ ] **Enable private vulnerability reporting** (repository Settings → Security). `SECURITY.md` and the issue chooser point reporters to it.
 - [ ] **Give a contact for the Code of Conduct and security reports.** `CODE_OF_CONDUCT.md` and `SECURITY.md` currently say "the contact details on @Berumor's GitHub profile". Supply an email address to print there, or make sure the profile shows one.
+- [ ] **A real app icon.** The current one is a placeholder (D-042). A 1024×1024 PNG is enough.
 - [ ] **Real exports for importer fixtures (M5).** Redistributable, with secrets removed: a large real Postman v2.1 collection plus its environments, an Insomnia v4 export, a Bruno collection, and any internal OpenAPI / Swagger specs that have caused trouble in other tools. A precise list will be written when M5 starts.
 
 ## Platform findings
 
-Nothing yet. `m1-packaging-check` records AppImage / WebKitGTK results on CachyOS here.
+- 2026-10-13, CachyOS, KDE Plasma on Wayland, WebKitGTK 2.54.1: a debug build (`pnpm tauri build --debug --no-bundle`) starts, renders correctly, follows the system dark theme and reaches the backend over IPC. No workaround needed. Screenshot: `docs/screenshots/m1-tauri-skeleton.png`.
+- The window shows a generic icon in the title bar when run from `target/`; an installed build gets its icon from the desktop file.
+- AppImage results come with `m1-packaging-check`.
 
 Known risks to check then:
 
@@ -33,6 +36,10 @@ Known risks to check then:
 ## Gotchas
 
 - A Cargo package must not be named `core` (D-001).
+- Building the app crate on Linux needs: `webkit2gtk-4.1`, `libayatana-appindicator` (or `libappindicator-gtk3`), `librsvg`, `xdotool`, `openssl`, and a C toolchain. CI installs the Debian equivalents in the Rust job.
+- The app icon in `crates/app/icons/` is a placeholder. To replace it: `pnpm tauri icon <1024px.png> -o crates/app/icons`, then delete the `android`, `ios`, `Square*` and `StoreLogo` files it also creates.
+- pnpm 11 refuses packages published very recently unless an exception is written to `pnpm-workspace.yaml`. Do not add exceptions; pick a slightly older version (D-042).
+- `crates/app/gen/` and `dist/` are build output and are git-ignored.
 - `url::substitute_path_variables` leaves `{{references}}` inside a path variable value untouched. `m2-variable-engine` has to percent-encode what they resolve to (D-039).
 - Query parameters are stored and sent as typed; only characters illegal in a URL are encoded (D-039, D-041).
 - The HTTP tests start servers on `127.0.0.1` and one test resolves a `.invalid` host name; they need a working loopback interface and resolver, nothing else.

@@ -2,7 +2,7 @@
 
 An open-source, git-native REST API client for teams. A desktop app for Windows, macOS and Linux, and an alternative to Postman, Insomnia and Bruno.
 
-> **Status: early development.** There is nothing to download or run yet. The plan and its progress are in [`docs/project/`](docs/project/).
+> **Status: early development.** There are no downloads yet, and the app only shows an empty window so far. The plan and its progress are in [`docs/project/`](docs/project/). To run it from source, see [`docs/project/CONVENTIONS.md`](docs/project/CONVENTIONS.md#run-build-test).
 
 ## What it is
 

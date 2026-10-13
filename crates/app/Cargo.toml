@@ -1,0 +1,29 @@
+[package]
+name = "damnhttp-app"
+description = "The Damn HTTP desktop app: Tauri shell and commands"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lib]
+name = "damnhttp_app"
+
+[build-dependencies]
+tauri-build = { workspace = true }
+
+[dependencies]
+damnhttp-core = { workspace = true }
+serde = { workspace = true }
+specta = { workspace = true }
+specta-typescript = { workspace = true }
+tauri = { workspace = true }
+tauri-specta = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+
+[lints]
+workspace = true
