@@ -955,3 +955,24 @@ fn a_query_typed_into_the_url_of_a_file_is_moved_to_the_query_table() {
         [query("id", "1234")]
     );
 }
+
+#[test]
+fn a_path_variable_named_like_a_file_round_trips() {
+    let (_dir, store) = workspace();
+    let collection = store.create_collection("Files").unwrap();
+    let path = store.create_request(&collection, "Download").unwrap();
+    let mut request = store.read_request(&path).unwrap();
+    request.set_url_bar_text("/files/:name.pdf/:user-id");
+    request.path_params[0].value = "report".to_owned();
+    request.path_params[1].value = "{{userId}}".to_owned();
+    store.save_request(&path, request.clone()).unwrap();
+
+    let file = read(&store, &path);
+    assert!(!file.contains("report"), "{file}");
+    assert!(
+        file.contains("user-id") && file.contains("{{userId}}"),
+        "{file}"
+    );
+    assert!(read(&store, ".damnhttp/values.yaml").contains("name.pdf: report"));
+    assert_eq!(store.read_request(&path).unwrap(), request);
+}

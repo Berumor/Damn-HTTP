@@ -13,15 +13,18 @@
 //! - The authority is skipped: after `scheme://` or a leading `//` up to the
 //!   next `/`; or, with no scheme, everything before the first `/` (so
 //!   `localhost:8080/x` and `{{baseUrl}}/x` work).
-//! - A path variable is `:name` directly after a `/` in the path, with
-//!   `name` matching `[A-Za-z_][A-Za-z0-9_]*`. The name ends at the first
-//!   character that cannot be part of it, so `/files/:name.pdf` has the
-//!   variable `name`.
+//! - A path variable is a whole path segment of the form `:name`, as in
+//!   Postman: the name runs to the next `/` or the end of the path, so
+//!   `/files/:name.pdf` has the variable `name.pdf` (D-040). `name` matches
+//!   `[A-Za-z_][A-Za-z0-9_.-]*`; a segment that starts with `:` but is not
+//!   such a name (`/:1x`, `/:a:b`, `/:id{{x}}`) is ordinary text.
 //! - The path ends at the first `?` or `#`.
 //!
 //! Positions are byte offsets into the template.
 
 use std::ops::Range;
+
+use crate::reference::is_valid_path_variable_name;
 
 /// A `:name` path variable in a template.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -102,25 +105,28 @@ pub fn analyze(url: &str) -> UrlAnalysis {
     let mut path_variables = Vec::new();
     let mut index = path_start;
     while index < path_end {
-        if is(index, b'/') && index + 1 < path_end && is(index + 1, b':') {
-            let name_start = index + 2;
-            let mut name_end = name_start;
-            while name_end < path_end && !opaque[name_end] && is_name_byte(bytes[name_end]) {
-                name_end += 1;
-            }
-            let starts_like_a_name = bytes
-                .get(name_start)
-                .is_some_and(|b| b.is_ascii_alphabetic() || *b == b'_');
-            if name_end > name_start && starts_like_a_name {
-                path_variables.push(PathVariableSpan {
-                    name: url[name_start..name_end].to_owned(),
-                    range: index + 1..name_end,
-                });
-                index = name_end;
-                continue;
-            }
+        if !is(index, b'/') {
+            index += 1;
+            continue;
         }
-        index += 1;
+        // The segment runs to the next `/` or the end of the path.
+        let segment_start = index + 1;
+        let segment_end = find(segment_start, b"/")
+            .filter(|end| *end < path_end)
+            .unwrap_or(path_end);
+        let name = segment_start + 1..segment_end;
+        // A reference inside the segment makes it ordinary text: opaque
+        // bytes are never part of a name.
+        if is(segment_start, b':')
+            && !opaque[name.clone()].contains(&true)
+            && is_valid_path_variable_name(&url[name.clone()])
+        {
+            path_variables.push(PathVariableSpan {
+                name: url[name].to_owned(),
+                range: segment_start..segment_end,
+            });
+        }
+        index = segment_end;
     }
 
     UrlAnalysis {
@@ -129,10 +135,6 @@ pub fn analyze(url: &str) -> UrlAnalysis {
         query,
         fragment,
     }
-}
-
-fn is_name_byte(byte: u8) -> bool {
-    byte.is_ascii_alphanumeric() || byte == b'_'
 }
 
 /// Marks every byte inside a `{{ ... }}` (braces included) and lists the
@@ -333,12 +335,34 @@ mod tests {
     }
 
     #[test]
-    fn the_name_ends_where_name_characters_end() {
-        assert_eq!(names("/files/:name.pdf"), ["name"]);
-        assert_eq!(names("/x/:a-:b"), ["a"]);
-        assert_eq!(names("/x/:a{{suffix}}"), ["a"]);
-        let analysis = analyze("/files/:name.pdf");
-        assert_eq!(analysis.path_variables[0].range, 7..12);
+    fn the_name_is_the_whole_segment_as_in_postman() {
+        assert_eq!(names("/files/:name.pdf"), ["name.pdf"]);
+        assert_eq!(
+            names("/users/:user-id/posts/:post_id.json"),
+            ["user-id", "post_id.json"]
+        );
+        assert_eq!(names("/x/:a.b/"), ["a.b"]);
+        assert_eq!(names("/x/:id?y=1"), ["id"]);
+        assert_eq!(names("/x/:id#top"), ["id"]);
+        let analysis = analyze("/files/:name.pdf/raw");
+        assert_eq!(analysis.path_variables[0].range, 7..16);
+    }
+
+    #[test]
+    fn a_segment_that_is_not_one_name_is_ordinary_text() {
+        for url in [
+            "/x/:a-:b",
+            "/x/:a{{suffix}}",
+            "/x/:{{name}}",
+            "/x/:a b",
+            "/x/:a@b",
+            "/x/:a%20b",
+            "/x/:.hidden",
+            "/x/:-a",
+            "/x/:idé",
+        ] {
+            assert_eq!(names(url), Vec::<String>::new(), "{url:?}");
+        }
     }
 
     #[test]
@@ -481,7 +505,9 @@ mod tests {
         );
         assert_eq!(sub("/x/:id").url, "/x/a%2Fb%20c%25%3F%C3%A9");
         assert_eq!(sub("/x/:ref/:mixed").url, "/x/{{stationId}}/x%20{{a}}%2Fy");
-        assert_eq!(sub("/:country/:country.json").url, "/it/it.json");
+        assert_eq!(sub("/:country/x/:country").url, "/it/x/it");
+        // The whole segment is one name, so this is a different variable.
+        assert_eq!(sub("/:country.json").missing, ["country.json"]);
 
         let result = sub("/:country/:nope/:empty/:nope");
         assert_eq!(result.url, "/it/:nope/:empty/:nope");
@@ -512,6 +538,6 @@ mod tests {
             assert!(!split.url.is_empty());
             let _ = substitute_path_variables(url, |_| Some("ü/ö"));
         }
-        assert_eq!(names("/:idé"), ["id"]);
+        assert_eq!(names("/:idé"), Vec::<String>::new());
     }
 }

@@ -103,8 +103,9 @@ Header values, bodies and form fields are committed as written (D-025). Before "
 ### Path variables and `{{variables}}`
 
 - A **variable reference** is `{{name}}` with `name` matching `[A-Za-z0-9_.-]+`. It can appear in the URL, query, headers, body and auth fields. Text inside `{{ }}` is never read as anything else.
-- A **path variable** is `:name` directly after a `/` in the path of the URL, with `name` matching `[A-Za-z_][A-Za-z0-9_]*`.
-  - The name ends at the first character that cannot be part of it, so `/files/:name.pdf` has the variable `name`.
+- A **path variable** is a whole path segment of the form `:name`, as in Postman, with `name` matching `[A-Za-z_][A-Za-z0-9_.-]*`.
+  - The name is everything up to the next `/` or the end of the path, so `/files/:name.pdf` has one variable called `name.pdf`, and `/users/:user-id` has `user-id`.
+  - A segment that starts with `:` but is not such a name is ordinary text: `/:1x`, `/:a:b`, `/:id{{suffix}}`.
   - The authority is not part of the path: it runs from `scheme://` (or a leading `//`) to the next `/`, or, when the URL has no scheme, from the start to the first `/`. So `localhost:8080/users/:id` and `{{baseUrl}}/users/:id` have one path variable, `id`, and `http://user:secret@host/` has none.
   - The path ends at the first `?` or `#`.
   - `localhost:8080`, `http://`, `/a:b`, `/time/12:30`, `?next=/users/:id` and `{{a:b}}` contain no path variable. A literal segment starting with `:` is written percent-encoded (`%3A`).

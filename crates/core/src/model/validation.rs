@@ -15,7 +15,7 @@ pub enum ValidationError {
     #[error("the variable `{0}` is marked secret, but only environment variables can be secret")]
     SecretNotAllowed(String),
     #[error(
-        "`{0}` is not a valid path variable name (use letters, digits and `_`, not starting with a digit)"
+        "`{0}` is not a valid path variable name (use letters, digits, `_`, `.` and `-`, starting with a letter or `_`)"
     )]
     InvalidPathVariableName(String),
     #[error("the path variable `{0}` is listed more than once")]

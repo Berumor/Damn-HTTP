@@ -1,21 +1,19 @@
 # Status
 
-Last updated: 2026-10-12
+Last updated: 2026-10-13
 
 ## Current
 
 - Milestone: **M1** (model, file format, request editor, send, response viewer)
-- Task: `m1-path-variables`, branch `feature/m1-path-variables`
+- Task: `path-variable-segment-names`, branch `fix/path-variable-segment-names`
 - State: PR open, waiting for the maintainer.
 
 ## Done
 
 - Plan approved and recorded: PRs #1 to #3 (D-001 to D-029). No open questions.
 - **M0 complete**: repo hygiene (PR #4), Cargo workspace (PR #5), CI (PR #6).
-- `m1-core-model` (PR #7, merged): the data model (D-021, D-024, D-033).
-- `m1-file-format` (PR #8, merged): `core::format`, JSON Schemas, `docs/FORMAT.md` (D-034 to D-037).
-- `m1-workspace-store` (PR #9, merged): `core::store::WorkspaceStore`, order key generation, slugs (D-038, accepted by the merge).
-- `m1-path-variables` (PR open): `core::url` (the shared URL template parser: path variables, references, query split and join, path variable substitution) and `model::url_edit` (URL bar text, path variable table that follows the URL, rename detection). `Request::split` now moves a query string out of `url`; the store aligns path variables on load and save. 135 tests in `core` (D-039).
+- `m1-core-model` (PR #7), `m1-file-format` (PR #8), `m1-workspace-store` (PR #9), `m1-path-variables` (PR #10): all merged. D-039 accepted by the maintainer in PR #10, except one point.
+- `path-variable-segment-names` (PR open): the maintainer's change from PR #10. A path variable is now a whole path segment, as in Postman: `/files/:name.pdf` has the variable `name.pdf`. Name grammar widened to `[A-Za-z_][A-Za-z0-9_.-]*` (D-040). 137 tests in `core`.
 
 ## What is stubbed or missing in `core`
 
@@ -25,7 +23,7 @@ Last updated: 2026-10-12
 - No file watching: the tree is read on demand (planned for M3).
 - A file with a newer `version` is refused with an error; showing it read-only in the UI comes with the UI tasks.
 
-`core` now has everything M1 needs from it. `http`, `import`, `git` are empty and there is no `app` crate or frontend yet.
+`core` has everything M1 needs from it. `http`, `import`, `git` are empty and there is no `app` crate or frontend yet.
 
 ## In progress
 
@@ -37,11 +35,11 @@ Last updated: 2026-10-12
 
 ## Open PRs
 
-- `feat: add the shared URL template parser` (`feature/m1-path-variables` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/10
+- `fix: treat a whole path segment as the path variable name` (`fix/path-variable-segment-names` → `develop`): https://github.com/Berumor/Damn-HTTP/pull/11
 
 ## Exact next step
 
 1. Confirm the PR is merged, then `git switch develop && git pull`.
-2. `feature/m1-http-engine`: the `http` crate (reqwest + rustls, redirects, timeouts, proxy, custom CA, skip TLS verification, timing, sizes, cancellation, body to a temp file), tested against a local server. Decide there how query parameters are encoded when sent (D-039). It needs new dependencies: check each with `cargo deny` and extend `deny.toml` only where needed.
+2. `feature/m1-http-engine`: the `http` crate (reqwest + rustls, redirects, timeouts, proxy, custom CA, skip TLS verification, timing, sizes, cancellation, body to a temp file), tested against a local server. Decide there how query parameters are encoded when sent (D-039). It needs new dependencies: check each with `cargo deny` and extend `deny.toml` only where needed. It does not depend on the open PR except for `docs/project/`.
 3. Then `feature/m1-tauri-skeleton` and `feature/m1-packaging-check`.
 4. Still open for the maintainer (see `NOTES.md`): repo settings (required checks, merge commits only).
